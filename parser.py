@@ -28,7 +28,7 @@ print(line + "\n[*] IP your network:\n" + address.text + line)
 #  Parse site
 url = input('Site: http://')
 
-page = requests.get("http://" + url.split()[0], headers=header)
+page = requests.get("https://" + url.split()[0], headers=header)
 soup = BeautifulSoup(page.text, "html.parser")
 
 #  Default parse HTML
