@@ -24,7 +24,7 @@ if __name__ == '__main__':
     }
 
     SITE = 'https://yandex.ru/'
-    USERNAME = 'rv.fedorin'
+    USERNAME = 'login'
     PASSWORD = 'xxxxxx'
     LOGIN_URL = get_url_login(SITE, headers=headers)  # Страница Логина
     URL = "https://mail.yandex.ru/lite"  # Страница самого контента для парсинга
