@@ -1,5 +1,6 @@
 import requests
 import bs4
+import getpass
 
 
 def get_url_login(site, headers=None):
@@ -16,6 +17,7 @@ def get_url_login(site, headers=None):
     # print(link)
     return link
 
+
 if __name__ == '__main__':
     # get_url_login('https://yandex.ru/')
     headers = {
@@ -24,8 +26,8 @@ if __name__ == '__main__':
     }
 
     SITE = 'https://yandex.ru/'
-    USERNAME = 'login'
-    PASSWORD = 'xxxxxx'
+    USERNAME = input('login: ')
+    PASSWORD = getpass.getpass()
     LOGIN_URL = get_url_login(SITE, headers=headers)  # Страница Логина
     URL = "https://mail.yandex.ru/lite"  # Страница самого контента для парсинга
 
@@ -43,11 +45,22 @@ if __name__ == '__main__':
     soup_login = bs4.BeautifulSoup(result.content, "html.parser")
 
     span_message = soup_login.find_all('div', class_='b-messages__message')
-    print(span_message)
+    themes = []
+    for div in span_message:
+        themes.append({
+            'from': div.find('a', class_='b-messages__from'),
+            'theme': div.find('a', class_='b-messages__message__link'),
+            'date': div.find('span', class_='b-messages__date')
+        })
 
-    # for mes in span_message:
-    #     print(mes)
-    #     # print(mes.text)
+    for post in themes:  #
+        len_from = 50 - len(post['from'].get('aria-label'))
+        print(post['from'].get('aria-label'), end='')
+        print(' '*len_from, end='')
+        print(post['theme'].get('aria-label')[:30], end='...')
+        print(' ' * 10, end='')
+        print(post['date'].get('title'))
 
-    print(soup_login.prettify())
+    input()
+    # <span class="b-messages__date" role="presentation" aria-hidden="true" title="Получено 9 окт. в 21:20"><span>21:20</span></span>
 
