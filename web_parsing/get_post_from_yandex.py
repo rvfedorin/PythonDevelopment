@@ -54,11 +54,14 @@ if __name__ == '__main__':
         })
 
     for post in themes:  #
-        len_from = 50 - len(post['from'].get('aria-label'))
-        print(post['from'].get('aria-label'), end='')
+        _from = post['from'].get('aria-label')
+        _theme = post['theme'].get('aria-label')[:30]
+        len_from = 50 - len(_from)
+        len_theme = 10 if len(_theme) > 30 else 30-len(_theme)+10
+        print(_from, end='')
         print(' '*len_from, end='')
-        print(post['theme'].get('aria-label')[:30], end='...')
-        print(' ' * 10, end='')
+        print(_theme, end='...')
+        print(' ' * len_theme, end='')
         print(post['date'].get('title'))
 
     input()

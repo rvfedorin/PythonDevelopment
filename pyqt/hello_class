@@ -1,0 +1,25 @@
+from PyQt5 import QtWidgets, QtCore
+import sys
+
+
+class MyWindow(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(MyWindow, self).__init__(parent)
+        self.label = QtWidgets.QLabel("Привет, мир!")
+        self.label.setAlignment(QtCore.Qt.AlignHCenter)
+        self.btnQuit = QtWidgets.QPushButton("Закрыть.")
+        self.vbox = QtWidgets.QVBoxLayout()
+        self.vbox.addWidget(self.label)
+        self.vbox.addWidget(self.btnQuit)
+        self.setLayout(self.vbox)
+
+        self.btnQuit.clicked.connect(QtWidgets.qApp.quit)
+
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    window = MyWindow()
+    window.resize(300, 70)
+    window.show()
+
+    sys.exit(app.exec_())

@@ -1,5 +1,5 @@
 import socket
-import os
+import sys
 import getopt
 import threading
 import subprocess
@@ -37,7 +37,15 @@ def main():
     global execute
     global target
 
-    usage()
+    if not len(sys.argv[1:]):
+        usage()
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hle:t:p:cu:",
+                                   ["help", "listen", "execute", "target", "port", "command", "upload"])
+    except getopt.GetoptError as err:
+        print(str(err))
+        usage()
 
 
 if __name__ == "__main__":
