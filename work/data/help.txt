@@ -1,0 +1,4 @@
+If you need specify the root switch manualy:
+'X.X.X.XrootX.X.X.X' where X.X.X.X after word 'root' is the root switch
+
+If you specify 'free' instead the numbor of ports - app will find free port
