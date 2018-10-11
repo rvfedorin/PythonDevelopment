@@ -5,7 +5,7 @@
 from re import findall, sub
 from sys import exc_info
 
-from switches import switch
+from work.switches import switch
 
 
 def format_connect(path_up, for_switch):
@@ -81,7 +81,8 @@ def type_connection(full_path_switch: str, _login, _passw):
     for sw_line in full_path_switch:
         switch_ports = sw_line.split('-')
         print(switch_ports[1], _login, _passw)
-        switch_obj = switch.NewSwitch(switch_ports[1], login=_login, passw=_passw)
+        switch_obj = switch.NewSwitch(switch_ports[1], _login, _passw)
+        print(switch_obj.login)
         tn = switch_obj.connect()
         if tn[0] is False:
             return [False, f'Error connect to {switch_ports[1]}']
@@ -137,16 +138,16 @@ if __name__ == '__main__':
     from xlrd import open_workbook
     import time
 
-    start = time.time()
-
-    ip_pattern = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-    ip_and_path = dict()
-    ip_and_up = []
-    ended_switch = "172.16.43.114"
-    excel_data_file = open_workbook('C:\INTRANETS\Orel\Intranet-Orel.xls')
-    root_sw = "172.16.48.254"
-    root_port = "28"
-    col_sw = 2
+    # start = time.time()
+    #
+    # ip_pattern = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+    # ip_and_path = dict()
+    # ip_and_up = []
+    # ended_switch = "172.16.43.114"
+    # excel_data_file = open_workbook('C:\INTRANETS\Orel\Intranet-Orel.xls')
+    # root_sw = "172.16.48.254"
+    # root_port = "28"
+    # col_sw = 2
     #
     # ended_switch = "172.16.16.134"
     # excel_data_file = open_workbook('C:\INTRANETS\Kaluga\Intranet-Kaluga.xls')
@@ -175,11 +176,11 @@ if __name__ == '__main__':
     # print(all_path)
     # print(end - start)
     # ==========================================
-    # sw = '172.17.86.154'
+    sw = '172.17.86.154'
     # sw_obj = switch.NewSwitch(sw)
     login = input('login: ')
     passw = input('pass: ')
-    # sw_obj = switch.NewSwitch(sw)
+    # sw_obj = switch.NewSwitch(sw, 'admin', 'pass')
     # print(sw_obj.find_free_port())
     # ============================================
     print(type_connection('28-172.16.48.254-10--26-172.16.43.238-4--1-172.17.155.106', login, passw))

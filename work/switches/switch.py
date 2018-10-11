@@ -13,10 +13,10 @@ from re import search
 
 
 class NewSwitch:
-    def __init__(self, ip, login='login', passw='pass'):
+    def __init__(self, ip, sw_login='login', sw_passw='pass'):
         self.ip = ip
-        self.login = login.encode()
-        self.passw = passw.encode()
+        self.login = sw_login.encode()
+        self.passw = sw_passw.encode()
 
     # заглушка для служебных telnet ответов
     def _bulk(self, _self, cmd, opt):
@@ -144,5 +144,5 @@ class NewSwitch:
 
 
 if __name__ == '__main__':
-    sw = NewSwitch('172.16.48.254')
-    print(sw.find_free_port())
+    sw = NewSwitch('172.16.48.254', 'asd', 'asd')
+    print(sw.login)
