@@ -1,3 +1,7 @@
+# Created by Fedorint Roman
+# Script create path to switch
+# ver 1.0.0
+
 from telnetlib import Telnet
 from socket import timeout
 
@@ -9,10 +13,10 @@ from re import search
 
 
 class NewSwitch:
-    def __init__(self, ip):
+    def __init__(self, ip, login='login', passw='pass'):
         self.ip = ip
-        self.login = b"login"
-        self.passw = b"pass"
+        self.login = login.encode()
+        self.passw = passw.encode()
 
     # заглушка для служебных telnet ответов
     def _bulk(self, _self, cmd, opt):
@@ -43,8 +47,6 @@ class NewSwitch:
         if model == 'DES-2108':
             message = f'{sw} is DES-2108  \n ERROR \n'
             return [False, message]
-
-
 
         try:
             print(f'Try connect to sw {self.ip}')

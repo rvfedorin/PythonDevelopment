@@ -1,122 +1,11 @@
 # Created by Fedorint Roman
 # Script create path to switch
-# ver 1.8.3
+# ver 1.0.0
 
-from re import findall, sub, search
+from re import findall, sub
 from sys import exc_info
-from telnetlib import Telnet
-from socket import timeout
-import settings
-import parse_web
 
-
-def port_without_link(msg):
-    data_list = msg.split('\n')
-    ports_down = []
-    for line in data_list:
-        if 'Link Down' in line or 'LinkDown' in line:
-            line = line.strip()
-            port_line = line.split(' ')
-            port = search('^\d{1,2}', port_line[0])
-            if port is not None and port.group() not in ports_down:
-                ports_down.append(port.group())
-    return ports_down
-
-
-def has_vlan(msg):
-    """ has it vlan """
-    _trace = False
-    data_list = msg.split('\n')
-    start_read = 7 if 'DGS-1210' in str(data_list) else 6
-    if _trace: print(f"----data_list-----\n{data_list}\n----data_list END-----")
-    vlan_on_port = []
-
-    for line in data_list[start_read:-1]:
-        line = line[4:].strip() if start_read == 6 else line.strip()
-        if _trace: print(f"----line-----\n{line}\n----line END-----")
-        vlan = search('^\d{1,4}', line)
-        if _trace: print(f"----vlan-----\n{vlan}\n----vlan END-----")
-        if vlan is not None:
-            vlan_on_port.append(vlan.group())
-    if not len(vlan_on_port) == 0 and (len(vlan_on_port) > 1 or int(vlan_on_port[0]) != 1):
-        print('True, has vlan', vlan_on_port)
-        return True
-    else:
-        print('False, has no vlan')
-        return False
-
-
-def _bulk(self, cmd, opt):
-    pass
-
-
-def clean_str(my_string):
-    for x in '!JM$FDK123456789':
-        my_string = my_string.replace(x, '')
-    return my_string.encode('UTF-8')[::-1]
-
-
-def login_to_sw(sw):
-    model = parse_web.get_model_sw(sw)
-    if model == 'DES-2108':
-        message = f'{sw} is DES-2108  \n ERROR \n'
-        return [False, message]
-
-    login = b"admin"
-    passw = settings.p_sw
-
-    try:
-        print(f'Try connect to sw {sw}')
-        tn = Telnet(sw, 23, 5)
-        tn.set_option_negotiation_callback(_bulk)
-    except timeout:
-        message = f"Timeout telnet to {sw} \n ERROR \n"
-        return [False, message]
-
-    tn.read_until(b":", timeout=1)
-    tn.write(login + b"\r")
-    tn.read_until(b":", timeout=1)
-    tn.write(clean_str(passw) + b"\r")
-    tn.read_until(b"#", timeout=2)
-    tn.write(b"\n\n")
-    tn.read_until(b'#')
-    return [True, tn]
-
-
-def find_free_port(sw):
-    all_free_ports = []
-    tn = login_to_sw(sw)
-    if tn[0] is False:
-        return False
-    else:
-        tn = tn[1]
-    tn.write(b"sh ports\n")
-    tn.write(b"n\n")
-    tn.write(b"n\n")
-    tn.write(b"n\n")
-    tn.write(b"q\n")
-    msg = (tn.read_until(b'#').decode())
-    p = port_without_link(msg)
-    msg = (tn.read_until(b'#').decode())
-
-    for port in p:
-        print(f'checked the port {port} without link')
-        command = f"show vlan ports {port}\n"
-        # msg = (tn.read_until(b'#').decode())
-        tn.write(b"\n")
-        tn.write(command.encode())
-        msg += (tn.read_until(b'#', timeout=1).decode())
-        msg += (tn.read_until(b'#', timeout=1).decode())
-        port_has_vlan = has_vlan(msg)
-        # print(msg)
-        if port_has_vlan is False:
-            all_free_ports.append(port)
-
-        msg = ''
-
-    tn.write(b"logout\n")
-    tn.close()
-    return all_free_ports
+from switches import switch
 
 
 def format_connect(path_up, for_switch):
@@ -181,7 +70,7 @@ def full_path(look_for_sw, stolbec_ip, root_port, root_sw, name_op):
     return [True, root_port + full_path_string]
 
 
-def type_connection(full_path_switch: str):
+def type_connection(full_path_switch: str, _login, _passw):
     # full_path_switch = 28-172.16.48.254-10--26-172.16.43.238-4--1-172.17.155.10
 
     _trace = False
@@ -189,54 +78,56 @@ def type_connection(full_path_switch: str):
     _speed = {'10G': 'TenG', '1000M': 'Gi', '100M': 'Fa'}
     new_path = ''
     full_path_switch = full_path_switch.split('--')
-    for switch in full_path_switch:
-        switch_ports = switch.split('-')
-
-        tn = login_to_sw(switch_ports[1])
+    for sw_line in full_path_switch:
+        switch_ports = sw_line.split('-')
+        print(switch_ports[1], _login, _passw)
+        switch_obj = switch.NewSwitch(switch_ports[1], login=_login, passw=_passw)
+        tn = switch_obj.connect()
         if tn[0] is False:
             return [False, f'Error connect to {switch_ports[1]}']
         else:
             tn = tn[1]
+        try:
+            if len(switch_ports) > 2:
+                port_up = f'sh ports {switch_ports[0]}\n'
+                port_down = f'sh ports {switch_ports[2]}\n'
+                tn.write(port_up.encode())
+                tn.write(b"q\n")
+                port_up = (tn.read_until(b'#').decode())
+                tn.read_until(b'#')
+                tn.write(port_down.encode())
+                tn.write(b"q\n")
+                # tn.write(b"\n\n")
+                port_down = (tn.read_until(b'#').decode())
+            else:
+                port_up = f'sh ports {switch_ports[0]}\n'
+                tn.write(port_up.encode())
+                tn.write(b"q\n")
+                tn.write(b"q\n")
+                port_up = (tn.read_until(b'#').decode())
+                switch_ports.append('Client.')
+                port_down = '-?-)'
 
-        if len(switch_ports) > 2:
-            port_up = f'sh ports {switch_ports[0]}\n'
-            port_down = f'sh ports {switch_ports[2]}\n'
-            tn.write(port_up.encode())
-            tn.write(b"q\n")
-            port_up = (tn.read_until(b'#').decode())
-            tn.read_until(b'#')
-            tn.write(port_down.encode())
-            tn.write(b"q\n")
-            # tn.write(b"\n\n")
-            port_down = (tn.read_until(b'#').decode())
-        else:
-            port_up = f'sh ports {switch_ports[0]}\n'
-            tn.write(port_up.encode())
-            tn.write(b"q\n")
-            tn.write(b"q\n")
-            port_up = (tn.read_until(b'#').decode())
-            switch_ports.append('Client.')
-            port_down = '-?-)'
+            if _trace: print(f'=====START===UP===\n{port_up}\n======END===UP==')
+            if _trace: print(f'=====START===DOWN===\n{port_down}\n======END===DOWN==')
+            # port_up = '(Fa)' if '100M' in port_up else '(Gi)' if '1000M' in port_up else '?'
+            # port_down = '(Fa)-->' if '100M' in port_down else '(Gi)-->' if '1000M' in port_down else '?'
 
-        if _trace: print(f'=====START===UP===\n{port_up}\n======END===UP==')
-        if _trace: print(f'=====START===DOWN===\n{port_down}\n======END===DOWN==')
-        # port_up = '(Fa)' if '100M' in port_up else '(Gi)' if '1000M' in port_up else '?'
-        # port_down = '(Fa)-->' if '100M' in port_down else '(Gi)-->' if '1000M' in port_down else '?'
+            for key in _speed:
+                if key in port_up:
+                    port_up = _speed[key]
 
-        for key in _speed:
-            if key in port_up:
-                port_up = _speed[key]
+                if key in port_down:
+                    port_down = f'{_speed[key]})-->'
 
-            if key in port_down:
-                port_down = f'{_speed[key]})-->'
+            if len(port_up) > 10: port_down = '?'
+            if len(port_down) > 10: port_down = '?)-->'
 
-        if len(port_up) > 10: port_down = '?'
-        if len(port_down) > 10: port_down = '?)-->'
+            connect = f'({switch_ports[0]}{port_up})-{switch_ports[1]}-({switch_ports[2]}{port_down}'
 
-        connect = f'({switch_ports[0]}{port_up})-{switch_ports[1]}-({switch_ports[2]}{port_down}'
-
-        tn.write(b"logout\n")
-        tn.close()
+            tn.write(b"logout\n")
+        finally:
+            tn.close()
         new_path += connect
     if _trace: print(f'===========\n{new_path}\n===========')
     return [True, new_path]
@@ -284,10 +175,14 @@ if __name__ == '__main__':
     # print(all_path)
     # print(end - start)
     # ==========================================
-    sw = '172.17.86.154'
-    print(find_free_port(sw))
+    # sw = '172.17.86.154'
+    # sw_obj = switch.NewSwitch(sw)
+    login = input('login: ')
+    passw = input('pass: ')
+    # sw_obj = switch.NewSwitch(sw)
+    # print(sw_obj.find_free_port())
     # ============================================
-    # print(type_connection('28-172.16.48.254-10--26-172.16.43.238-4--1-172.17.155.106'))
+    print(type_connection('28-172.16.48.254-10--26-172.16.43.238-4--1-172.17.155.106', login, passw))
 
 
 # print('\n'.join(batch_Names_wanted))
