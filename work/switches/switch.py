@@ -137,12 +137,26 @@ class NewSwitch:
         tn.close()
         return all_free_ports
 
-    # создать влын
-    def create_vlan(self, port, tag, vlan_name, vlan_tag):
+    # выполнить список комманд на свитче
+    def send_command(self, command_list):
+        res = ''
         tn = self.connect()
-        tn.close()
+        if tn[0] is False:
+            return False
+        else:
+            tn = tn[1]
+        try:
+            for com in command_list:
+                res += tn.read_until(b'#', timeout=1).decode()
+                tn.write(com.encode())
+                res += tn.read_until(b'#', timeout=1).decode()
+            tn.write(b"logout\n")
+        finally:
+            tn.close()
+        return res
 
 
 if __name__ == '__main__':
-    sw = NewSwitch('172.16.48.254', 'asd', 'asd')
-    print(sw.login)
+    passw = input("pass: ")
+    sw = NewSwitch('172.16.48.254', 'admin', passw)
+    print(sw.send_command(['show ports\nq\n', 'show vlan po 2\nq\n', 'show ports 2\n']))

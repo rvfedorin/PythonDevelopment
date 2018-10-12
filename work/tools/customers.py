@@ -1,11 +1,11 @@
-# ver 1.0.7
+# ver 1.0.0
 # created by Roman Fedorin
 import shelve
 from xlrd import open_workbook
 # from re import findall
 # my
-import intranet.full_path_to_sw
-import settings
+from work.intranet import full_path_to_sw
+from work import settings
 
 
 class Customer:

@@ -1,10 +1,10 @@
-# ver 1.7.0
+# ver 1.0.0
 # created by Roman Fedorin
 
 # from sys import exit
 
-from full_path_to_sw import login_to_sw
-import save_log
+from work.tools import save_log
+from work.switches import switch
 
 
 def op_define(mnemokod):
@@ -13,7 +13,7 @@ def op_define(mnemokod):
 
 
 # string_sw is the full path to the desired switch from the file nodepath
-def del_code(clients, correct_cl='y', que=None):
+def del_code(clients, correct_cl='y', que=None, login=None, passw=None):
 
     if isinstance(clients, tuple):
         que = clients[1]
@@ -56,22 +56,15 @@ def del_code(clients, correct_cl='y', que=None):
         for sw_port in list_sw:
             sw_port_edit = sw_port.split("-")
             print("\ntelnet to " + sw_port_edit[1] + " ....")
-            tn = login_to_sw(sw_port_edit[1])
-            if tn[0] is False:
-                msg = f"FAIL. Timeout telnet to {sw_port_edit[1]} \n ERROR \n"
-                log_string.append(msg)
-                falses = True
-                continue
-            else:
-                tn = tn[1]
+            sw_obj = switch.NewSwitch(sw_port_edit[1], login, passw)
+
             # #################### START DELETE CLIENTS IN LIST ########################
             for client in clients:
                 answer_code_line = ''
                 code_line = "delete vlan vl {} \r".format(client.vlan_number)
                 code2_line = "delete vlan {} \r".format(client.vlan_name)
-                tn.write(bytes(code_line, "utf-8"))
-                answer_code_line += tn.read_until(b"#", timeout=2).decode()
-                answer_code_line += (tn.read_until(b"#", timeout=2)).decode()
+
+                answer_code_line += sw_obj.send_command([code_line])
                 print(answer_code_line)
                 if answer_code_line.find("Success") >= 0:
 
@@ -79,8 +72,7 @@ def del_code(clients, correct_cl='y', que=None):
                                    f"SUCCESS removed from {sw_port_edit[1]} ======= by VLAN NUMBER ===== \n"
                     print(print_string)
                 else:
-                    tn.write(bytes(code2_line, "utf-8"))
-                    answer_code2_line = (tn.read_until(b"#", timeout=2)).decode()
+                    answer_code2_line = sw_obj.send_command([code2_line])
                     if answer_code2_line.find("Success") >= 0:
                         print_string = f"=============== {client.vlan_name} TAG {client.vlan_number} " \
                                        f"=== SUCCESS removed from {sw_port_edit[1]} ===== by NAME ======= \n"
@@ -94,17 +86,8 @@ def del_code(clients, correct_cl='y', que=None):
 
                 log_string.append(print_string)
             # #################### END DELETE CLIENTS IN LIST ########################
+            sw_obj.send_command(["save\r"])
 
-            tn.write(b"save\r")
-            # print((tn.read_until(b"#", timeout=2)).decode())
-
-            tn.write(b"logout\r")
-
-            # raw_date = str(tn.read_very_eager())
-            # str_date = raw_date.replace("\\n\\r", "\n")
-            # print(str_date)
-
-            tn.close()
         save_log.create_log(log_string, city, 'delete_vlan')
 
         if falses:
@@ -127,9 +110,12 @@ def del_code(clients, correct_cl='y', que=None):
 
 
 if __name__ == '__main__':
-    from customers import Customer
-    state = 'Orel'
+    from work.tools.customers import Customer
+    import os
 
-    cl_data = [state, '4000', 4000, '172.16.47.122', 15, 'T']
+    print(os.path.abspath(os.path.dirname(__file__)))
+    state = 'Orel'
+    passw = input("passw: ")
+    cl_data = [state, '4001', 4000, '172.16.47.122', 15, 'T']
     client = Customer(*cl_data)
-    del_code(client, 'y')
+    del_code(client, 'y', login='admin', passw=passw)

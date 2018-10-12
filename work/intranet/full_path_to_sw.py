@@ -80,55 +80,36 @@ def type_connection(full_path_switch: str, _login, _passw):
     full_path_switch = full_path_switch.split('--')
     for sw_line in full_path_switch:
         switch_ports = sw_line.split('-')
-        print(switch_ports[1], _login, _passw)
         switch_obj = switch.NewSwitch(switch_ports[1], _login, _passw)
-        print(switch_obj.login)
-        tn = switch_obj.connect()
-        if tn[0] is False:
-            return [False, f'Error connect to {switch_ports[1]}']
+        if len(switch_ports) > 2:
+            port_up = f'sh ports {switch_ports[0]}\n'
+            port_down = f'sh ports {switch_ports[2]}\n'
+
+            port_up = switch_obj.send_command([port_up, 'q\n'])
+            port_down = switch_obj.send_command([port_down, 'q\n'])
         else:
-            tn = tn[1]
-        try:
-            if len(switch_ports) > 2:
-                port_up = f'sh ports {switch_ports[0]}\n'
-                port_down = f'sh ports {switch_ports[2]}\n'
-                tn.write(port_up.encode())
-                tn.write(b"q\n")
-                port_up = (tn.read_until(b'#').decode())
-                tn.read_until(b'#')
-                tn.write(port_down.encode())
-                tn.write(b"q\n")
-                # tn.write(b"\n\n")
-                port_down = (tn.read_until(b'#').decode())
-            else:
-                port_up = f'sh ports {switch_ports[0]}\n'
-                tn.write(port_up.encode())
-                tn.write(b"q\n")
-                tn.write(b"q\n")
-                port_up = (tn.read_until(b'#').decode())
-                switch_ports.append('Client.')
-                port_down = '-?-)'
+            port_up = f'sh ports {switch_ports[0]}\n'
+            port_up = switch_obj.send_command([port_up, 'q\n'])
+            switch_ports.append('Client.')
+            port_down = '-?-)'
 
-            if _trace: print(f'=====START===UP===\n{port_up}\n======END===UP==')
-            if _trace: print(f'=====START===DOWN===\n{port_down}\n======END===DOWN==')
-            # port_up = '(Fa)' if '100M' in port_up else '(Gi)' if '1000M' in port_up else '?'
-            # port_down = '(Fa)-->' if '100M' in port_down else '(Gi)-->' if '1000M' in port_down else '?'
+        if _trace: print(f'=====START===UP===\n{port_up}\n======END===UP==')
+        if _trace: print(f'=====START===DOWN===\n{port_down}\n======END===DOWN==')
+        # port_up = '(Fa)' if '100M' in port_up else '(Gi)' if '1000M' in port_up else '?'
+        # port_down = '(Fa)-->' if '100M' in port_down else '(Gi)-->' if '1000M' in port_down else '?'
 
-            for key in _speed:
-                if key in port_up:
-                    port_up = _speed[key]
+        for key in _speed:
+            if key in port_up:
+                port_up = _speed[key]
 
-                if key in port_down:
-                    port_down = f'{_speed[key]})-->'
+            if key in port_down:
+                port_down = f'{_speed[key]})-->'
 
-            if len(port_up) > 10: port_down = '?'
-            if len(port_down) > 10: port_down = '?)-->'
+        if len(port_up) > 10: port_down = '?'
+        if len(port_down) > 10: port_down = '?)-->'
 
-            connect = f'({switch_ports[0]}{port_up})-{switch_ports[1]}-({switch_ports[2]}{port_down}'
+        connect = f'({switch_ports[0]}{port_up})-{switch_ports[1]}-({switch_ports[2]}{port_down}'
 
-            tn.write(b"logout\n")
-        finally:
-            tn.close()
         new_path += connect
     if _trace: print(f'===========\n{new_path}\n===========')
     return [True, new_path]
@@ -176,7 +157,7 @@ if __name__ == '__main__':
     # print(all_path)
     # print(end - start)
     # ==========================================
-    sw = '172.17.86.154'
+    # sw = '172.17.86.154'
     # sw_obj = switch.NewSwitch(sw)
     login = input('login: ')
     passw = input('pass: ')
