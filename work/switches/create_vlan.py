@@ -1,4 +1,4 @@
-# ver 1.7.6
+# ver 1.0.0
 # created by Roman Fedorin
 
 from sys import exit
@@ -7,59 +7,42 @@ import queue
 import re
 #  My
 
+from work.switches import switch
+from work.tools import save_log
 
 
 filename = "./nodepath"
 
 
-def send_command_to_sw(sw_param, clients: list, messages_queue):
+def send_command_to_sw(sw_param, clients: list, messages_queue, login=None, passw=None):
     sw_port_edit = sw_param.split("-")
     n_port = len(sw_port_edit)
-    _timeout = 1
+
     message = '\n'
     message += "_" * 98 + '\n'
     message += "=" * 20 + f" telnet to SWITCH {sw_port_edit[1]} " + "=" * (59 - len(sw_port_edit[1])) + '\n'
     message += "=" * 98 + '\n'
 
-    tn = login_to_sw(sw_port_edit[1])
+    sw_obj = switch.NewSwitch(sw_port_edit[1], login, passw)
 
-    if tn[0] is False:
-        message += tn[1]
-        message_dict = {sw_port_edit[1]: message}
-        messages_queue.put(message_dict)
-        exit()
-    else:
-        tn = tn[1]
     for client in clients:
         if n_port % 2 == 0:
-            conf_vl = f"conf vlan {client.vlan_name} add tagged {sw_port_edit[0]}"
+            conf_vl = f"conf vlan {client.vlan_name} add tagged {sw_port_edit[0]}\r"
         else:
-            conf_vl = f"conf vlan {client.vlan_name} add tagged {sw_port_edit[0]},{sw_port_edit[2]}"
+            conf_vl = f"conf vlan {client.vlan_name} add tagged {sw_port_edit[0]},{sw_port_edit[2]}\r"
 
-        crea_vl = f"create vlan {client.vlan_name} tag {client.vlan_number}"
+        crea_vl = f"create vlan {client.vlan_name} tag {client.vlan_number}\r"
 
-        tn.write(b"\n\n")
-        message += (tn.read_until(b"#", timeout=_timeout)).decode()
-        tn.write(bytes(crea_vl, "utf-8") + b"\n")
-        message += (tn.read_until(b"#", timeout=_timeout)).decode()
-        tn.write(bytes(conf_vl, "utf-8") + b"\n")
-        message += (tn.read_until(b"#", timeout=_timeout)).decode()
+        message += sw_obj.send_command([crea_vl, conf_vl])
 
         if sw_port_edit[1] == client.switch:
             if client.tag == "U" or client.tag == "u":
-                tn.write(bytes(f"conf vlan default del {client.sw_port} \r", "utf-8"))
-                message += (tn.read_until(b"#", timeout=_timeout)).decode()
-                tn.write(bytes(f"conf vlan {client.vlan_name} add untagged {client.sw_port}\r", "utf-8"))
-                message += (tn.read_until(b"#", timeout=_timeout)).decode()
+                del_from_def = f"conf vlan default del {client.sw_port} \r"
+                add_untagged = f"conf vlan {client.vlan_name} add untagged {client.sw_port}\r"
+                message += sw_obj.send_command([del_from_def, add_untagged])
             elif client.tag == "T" or client.tag == "t":
-                tn.write(bytes(f"conf vlan {client.vlan_name} add tagged {client.sw_port}\r", "utf-8"))
-                message += (tn.read_until(b"#", timeout=_timeout)).decode()
-
-    tn.write(b'save\n')
-    message += (tn.read_until(b"#", timeout=1)).decode()
-    tn.write(b"logout\n")
-    message += (tn.read_until(b"#", timeout=1)).decode()
-    tn.close()
+                add_tagged = f"conf vlan {client.vlan_name} add tagged {client.sw_port}\r"
+                message += sw_obj.send_command([add_tagged, 'save\n'])
 
     if 'DGS-1210' in message:
         pattern = '(Saving all configurations.*Saving all configurations)'
@@ -95,7 +78,7 @@ def format_order_message(_queue, string_sw):
     return [all_log_list, _error]
 
 
-def create_vlan(clients, chek=None):
+def create_vlan(clients, chek=None, login=None, passw=None):
 
     if type(clients) is list:
         client = clients[0]
@@ -122,7 +105,8 @@ def create_vlan(clients, chek=None):
         list_sw = client.all_path.split("--")
         threads_list = list()
         for sw_port in list_sw:
-            thred_connect_sw = threading.Thread(target=send_command_to_sw, args=(sw_port, clients, messages_queue))
+            thred_connect_sw = threading.Thread(target=send_command_to_sw,
+                                                args=(sw_port, clients, messages_queue, login, passw))
             thred_connect_sw.start()
             threads_list.append(thred_connect_sw)
 
@@ -141,3 +125,16 @@ def create_vlan(clients, chek=None):
     else:
         print('Data is incorrect! You need type y or n.')
         return [False]
+
+
+if __name__ == '__main__':
+    from work.tools.customers import Customer
+    import os
+
+    print(os.path.abspath(os.path.dirname(__file__)))
+
+    state = 'Orel'
+    passw = input("passw: ")
+    cl_data = [state, '4001', 4000, '172.16.47.122', 15, 'T']
+    client = Customer(*cl_data)
+    create_vlan(client, 'y', login='admin', passw=passw)

@@ -1,0 +1,40 @@
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+__________________________________________________________________________________________________
+==================== telnet to SWITCH 172.16.48.254 ==============================================
+==================================================================================================
+create vlan 4001 tag 4000
+Command: create vlan 4001 tag 4000
+
+Success.                                                          
+
+DGS-3420-28TC:admin#conf vlan 4001 add tagged 28,6
+Command: config vlan 4001 add tagged 6,28
+
+Success.                                                          
+
+DGS-3420-28TC:admin#
+__________________________________________________________________________________________________
+==================== telnet to SWITCH 172.16.47.122 ==============================================
+==================================================================================================
+create vlan 4001 tag 4000
+Command: create vlan 4001 tag 4000
+
+Success.                                                          
+
+DES-3200-10:admin#conf vlan 4001 add tagged 9
+Command: config vlan 4001 add tagged 9
+
+Success.                                                          
+
+DES-3200-10:admin#conf vlan 4001 add tagged 15
+Command: config vlan 4001 add tagged
+Next possible completions: 
+<portlist>          
+
+DES-3200-10:admin#save
+Command: save
+
+Saving all configurations to NV-RAM..........   0 %[5D100 %[5DDone. 
+
+DES-3200-10:admin#

@@ -6,8 +6,8 @@ import telnetlib
 import paramiko
 import shelve
 #my
-import save_log
-import settings
+from work.tools import save_log
+from work import settings
 
 
 def clean_str(my_string):

@@ -2,7 +2,7 @@
 # created by Roman Fedorin
 
 import shelve
-import settings
+from work import settings
 
 
 def delete_from_db(db, key):
