@@ -5,19 +5,27 @@ import sys
 class MainWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.all_fields_full = 0
 
         # Блок заголовков и полей ввода строками
         self.label_mnem = QtWidgets.QLabel("Мнемокод: ")
         self.edit_mnem = QtWidgets.QLineEdit()
+        # self.edit_mnem.setValidator(QtGui.QIntValidator())
 
         self.label_vlan = QtWidgets.QLabel("Номер влана: ")
         self.edit_vlan = QtWidgets.QLineEdit()
+        self.edit_vlan.setValidator(QtGui.QIntValidator())
 
         self.label_ipsw = QtWidgets.QLabel("IP свитча: ")
         self.edit_ipsw = QtWidgets.QLineEdit()
+        str_ip = '^((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])' \
+                 '(\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])){3})$'
+        regexp_ip = QtCore.QRegExp(str_ip)
+        self.edit_ipsw.setValidator(QtGui.QRegExpValidator(regexp_ip))
 
         self.label_port = QtWidgets.QLabel("Порт подклчения: ")
         self.edit_port = QtWidgets.QLineEdit()
+        self.edit_port.setValidator(QtGui.QIntValidator())
 
         self.check_tag = QtWidgets.QCheckBox("Untagged")
 
@@ -28,13 +36,10 @@ class MainWindow(QtWidgets.QWidget):
 
         # Блок кнопок и выбора города
         self.city_list = QtWidgets.QComboBox()
-        self.city_list.addItems(['Orel', 'Kursk', 'Magnitogorsk', 'Воронеж'])
-        self.city_list.activated.connect(self.city_choise)
+        self.city_list.addItems(['Orel', 'Kursk', 'Magnitogorsk', 'Voronezh'])
+        # self.city_list.activated.connect(self.city_choise)
         self.but_free_vlan = QtWidgets.QPushButton(" Найти свободный влан")
         self.but_free_port = QtWidgets.QPushButton(" Найти свободный порт")
-        self.but_run = QtWidgets.QPushButton("Выполнить")
-        # self.but_run.setMinimumHeight(30)
-        self.but_run.setFixedSize(80, 30)
 
         # таблица расположения
         self.grid_entry = QtWidgets.QGridLayout()
@@ -62,26 +67,48 @@ class MainWindow(QtWidgets.QWidget):
         self.space_box = QtWidgets.QVBoxLayout()
         self.space_box.setContentsMargins(0, 15, 0, 0)
 
+        self.but_run = QtWidgets.QPushButton("Выполнить")
+        self.but_run.setFixedSize(80, 30)
+        self.but_run.setDisabled(True)
+
+        # self.btnButton.setDisable(True)
+        # self.leInput.textChanged.connect(self.disable_button)
+        #
+        # def disableButton(self):
+        #
+
         self.vb = QtWidgets.QVBoxLayout()
         self.vb.addLayout(self.grid_entry)
         self.vb.addLayout(self.space_box)
-        self.vb.addWidget(self.but_run)
+        self.vb.addWidget(self.but_run, alignment=QtCore.Qt.AlignHCenter)
 
         self.setLayout(self.vb)
 
         self.but_run.clicked.connect(self.run_b)
 
-    def city_choise(self):
-        pass
+        self.edit_mnem.textChanged.connect(self.disable_button)
+        self.edit_vlan.textChanged.connect(self.disable_button)
+        self.edit_ipsw.textChanged.connect(self.disable_button)
+        self.edit_port.textChanged.connect(self.disable_button)
+
+    def disable_button(self, field):
+        _chek = (len(self.edit_mnem.text())
+                 and len(self.edit_vlan.text())
+                 and len(self.edit_ipsw.text())
+                 and len(self.edit_port.text()))
+        if _chek:
+            self.but_run.setDisabled(False)
 
     def run_b(self):
+        print(self.city_list.currentText())
         print(self.edit_mnem.text())
         print(self.edit_vlan.text())
+        print(self.edit_ipsw.text())
         print(self.edit_port.text())
         print(self.check_tag.isChecked())
         print(self.rb_create.isChecked())
         print(self.rb_delete.isChecked())
-
+        print(self.rb_speed.isChecked())
 
 
 if __name__ == "__main__":
