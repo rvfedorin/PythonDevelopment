@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 
 
@@ -30,9 +30,11 @@ class MainWindow(QtWidgets.QWidget):
         self.city_list = QtWidgets.QComboBox()
         self.city_list.addItems(['Orel', 'Kursk', 'Magnitogorsk', 'Воронеж'])
         self.city_list.activated.connect(self.city_choise)
-        self.but_free_vlan = QtWidgets.QPushButton("Найти свободный влан")
-        self.but_free_port = QtWidgets.QPushButton("Найти свободный порт")
+        self.but_free_vlan = QtWidgets.QPushButton(" Найти свободный влан")
+        self.but_free_port = QtWidgets.QPushButton(" Найти свободный порт")
         self.but_run = QtWidgets.QPushButton("Выполнить")
+        # self.but_run.setMinimumHeight(30)
+        self.but_run.setFixedSize(80, 30)
 
         # таблица расположения
         self.grid_entry = QtWidgets.QGridLayout()
@@ -67,10 +69,18 @@ class MainWindow(QtWidgets.QWidget):
 
         self.setLayout(self.vb)
 
+        self.but_run.clicked.connect(self.run_b)
+
     def city_choise(self):
         pass
 
-
+    def run_b(self):
+        print(self.edit_mnem.text())
+        print(self.edit_vlan.text())
+        print(self.edit_port.text())
+        print(self.check_tag.isChecked())
+        print(self.rb_create.isChecked())
+        print(self.rb_delete.isChecked())
 
 
 
