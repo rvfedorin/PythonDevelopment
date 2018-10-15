@@ -20,6 +20,7 @@ class MainWindow(QtWidgets.QWidget):
         self.edit_port = QtWidgets.QLineEdit()
 
         self.check_tag = QtWidgets.QCheckBox("Untagged")
+        self.check_tag.setToolTip("По умолчанию tagged")
 
         self.rb_create = QtWidgets.QRadioButton("Создать")
         self.rb_create.setChecked(True)
@@ -29,7 +30,7 @@ class MainWindow(QtWidgets.QWidget):
         # Блок кнопок и выбора города
         self.city_list = QtWidgets.QComboBox()
         self.city_list.addItems(['Orel', 'Kursk', 'Magnitogorsk', 'Воронеж'])
-        self.city_list.activated.connect(self.city_choise)
+        # self.city_list.activated.connect(self.city_choise)
         self.but_free_vlan = QtWidgets.QPushButton(" Найти свободный влан")
         self.but_free_port = QtWidgets.QPushButton(" Найти свободный порт")
         self.but_run = QtWidgets.QPushButton("Выполнить")
@@ -65,16 +66,17 @@ class MainWindow(QtWidgets.QWidget):
         self.vb = QtWidgets.QVBoxLayout()
         self.vb.addLayout(self.grid_entry)
         self.vb.addLayout(self.space_box)
-        self.vb.addWidget(self.but_run)
+        self.vb.addWidget(self.but_run, alignment=QtCore.Qt.AlignHCenter)
 
         self.setLayout(self.vb)
 
         self.but_run.clicked.connect(self.run_b)
 
-    def city_choise(self):
-        pass
+    # def city_choise(self):
+    #     pass
 
     def run_b(self):
+        print(self.city_list.currentText())
         print(self.edit_mnem.text())
         print(self.edit_vlan.text())
         print(self.edit_port.text())
