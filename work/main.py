@@ -37,11 +37,8 @@ class MainWindow(QtWidgets.QWidget):
 
         # Блок кнопок и выбора города
         self.city_list = QtWidgets.QComboBox()
-<<<<<<< HEAD
-        self.city_list.addItems(['Orel', 'Kursk', 'Magnitogorsk', 'Воронеж'])
-=======
         self.city_list.addItems(['Orel', 'Kursk', 'Magnitogorsk', 'Voronezh'])
->>>>>>> 5392c185fe06eff0406347e04ed4da90084391d4
+
         # self.city_list.activated.connect(self.city_choise)
         self.but_free_vlan = QtWidgets.QPushButton(" Найти свободный влан")
         self.but_free_port = QtWidgets.QPushButton(" Найти свободный порт")
@@ -91,10 +88,6 @@ class MainWindow(QtWidgets.QWidget):
 
         self.but_run.clicked.connect(self.run_b)
 
-<<<<<<< HEAD
-    # def city_choise(self):
-    #     pass
-=======
         self.edit_mnem.textChanged.connect(self.disable_button)
         self.edit_vlan.textChanged.connect(self.disable_button)
         self.edit_ipsw.textChanged.connect(self.disable_button)
@@ -107,7 +100,6 @@ class MainWindow(QtWidgets.QWidget):
                  and len(self.edit_port.text()))
         if _chek:
             self.but_run.setDisabled(False)
->>>>>>> 5392c185fe06eff0406347e04ed4da90084391d4
 
     def run_b(self):
         print(self.city_list.currentText())
