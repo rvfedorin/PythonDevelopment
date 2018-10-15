@@ -1,5 +1,8 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
+import os
+
+from work import settings
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -86,6 +89,7 @@ class MainWindow(QtWidgets.QWidget):
 
         self.setLayout(self.vb)
 
+        # добавляем события
         self.but_run.clicked.connect(self.run_b)
 
         self.edit_mnem.textChanged.connect(self.disable_button)
@@ -93,13 +97,59 @@ class MainWindow(QtWidgets.QWidget):
         self.edit_ipsw.textChanged.connect(self.disable_button)
         self.edit_port.textChanged.connect(self.disable_button)
 
-    def disable_button(self, field):
+        self.rb_create.clicked.connect(self.disable_entry)
+        self.rb_delete.clicked.connect(self.disable_entry)
+        self.rb_speed.clicked.connect(self.disable_entry)
+
+    def disable_button(self):
         _chek = (len(self.edit_mnem.text())
                  and len(self.edit_vlan.text())
                  and len(self.edit_ipsw.text())
                  and len(self.edit_port.text()))
         if _chek:
             self.but_run.setDisabled(False)
+        else:
+            self.but_run.setDisabled(True)
+
+    def disable_entry(self):
+        if self.rb_create.isChecked():
+            if self.edit_mnem.text() == 'All in file':  # если переходим со вкладки смены скорости
+                self.edit_mnem.setText('')
+                self.edit_vlan.setText('')
+                self.edit_ipsw.setText('')
+                self.edit_mnem.setDisabled(False)
+                self.edit_vlan.setDisabled(False)
+                self.edit_ipsw.setDisabled(False)
+            self.edit_port.setText('')
+            self.edit_port.setDisabled(False)
+
+        elif self.rb_delete.isChecked():
+            if self.edit_mnem.text() == 'All in file':  # если переходим со вкладки смены скорости
+                self.edit_mnem.setText('')
+                self.edit_vlan.setText('')
+                self.edit_ipsw.setText('')
+                self.edit_mnem.setDisabled(False)
+                self.edit_vlan.setDisabled(False)
+                self.edit_ipsw.setDisabled(False)
+            self.edit_port.setText('999')
+            self.edit_port.setDisabled(True)
+
+        elif self.rb_speed.isChecked():
+            self.edit_mnem.setText('All in file')
+            self.edit_vlan.setText('4096')
+            self.edit_ipsw.setText('255.255.255.255')
+            self.edit_port.setText('999')
+
+            self.edit_mnem.setDisabled(True)
+            self.edit_vlan.setDisabled(True)
+            self.edit_ipsw.setDisabled(True)
+            self.edit_port.setDisabled(True)
+
+            # client_to_change_speed
+            try:
+                os.startfile(os.path.abspath(os.getcwd() + settings.client_to_change_speed))
+            except:
+                print("Ошибка открытия файла клиентов со скоростями: {}")
 
     def run_b(self):
         print(self.city_list.currentText())
