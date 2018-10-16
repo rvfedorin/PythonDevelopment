@@ -246,17 +246,17 @@ def create_on_cisco(state, client):
 
 
 if __name__ == '__main__':
-    from customers import Customer
+    from work.tools.customers import Customer
     state = 'Orel'
     cl_data = [state, 'Orel-Atlantm', 55, '172.16.49.150', 2, 'T']
     client = Customer(*cl_data)
 
-    tn = login_on_cisco('213.170.117.253')
-    ip_if_lan_list = ['31', '200', '205', '51', '30720']  # 31.200.205.51
-    create_command(tn, ip_if_lan_list, client)
+    # tn = login_on_cisco('213.170.117.253')
+    # ip_if_lan_list = ['31', '200', '205', '51', '30720']  # 31.200.205.51
+    # create_command(tn, ip_if_lan_list, client)
 
 
     # for i in create_on_cisco(state, client):
     #     print(i)
 
-    # print(get_free_interface(state))
+    print(get_free_interface(state))

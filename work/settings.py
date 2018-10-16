@@ -1,4 +1,6 @@
-data_path = '../data/'
+import os
+
+data_path = '/data/'
 help_file = data_path+'help.txt'
 intranet_path = 'C:/Intranets/'
 clients_conf_path = '/etc/Clients.conf'

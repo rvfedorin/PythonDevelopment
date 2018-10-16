@@ -2,6 +2,7 @@
 # created by Roman Fedorin
 
 import shelve
+import os
 from work import settings
 
 
@@ -43,13 +44,24 @@ def get_data_from_db(key):
     return result
 
 
+def get_list_cities():
+    """ Function reads all keys of cities from shelveDB """
+    city_shelve = os.path.abspath(os.getcwd() + settings.city_shelve)
+    cities_keys = {}
+    with shelve.open(city_shelve) as db:
+        for key in db:
+            cities_keys[db[key]['city']] = key
+    return cities_keys
+
+
 if __name__ == '__main__':
 
-    city_shelve = settings.city_shelve
-    with shelve.open(city_shelve) as db:
-        for i in db:
-            print(f'{i} => {db[i]}')
-
+    # city_shelve = settings.city_shelve
+    # with shelve.open(city_shelve) as db:
+    #     for i in db:
+    #         print(f'{i} => {db[i]}')
+    print(os.path.abspath(os.getcwd() + f'../{settings.city_shelve}'))
+    print(get_list_cities())
 
 
 
