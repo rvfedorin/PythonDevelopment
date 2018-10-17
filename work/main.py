@@ -2,10 +2,12 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 import os
 import shelve
+from Cryptodome.Cipher import Blowfish
 
 from work import settings
 from work.tools import work_with_db
 from work.cisco import create_cl_cisco
+from work.switches import switch
 
 
 def get_list_cities():
@@ -25,9 +27,11 @@ class MainWindow(QtWidgets.QWidget):
         self.all_fields_full = 0
         self.city = work_with_db.get_list_cities()  # Словарь горд:ключ
         self.city_pref = {v: k for k, v in self.city.items()}  # Словарь ключ:город
-        self.pass_sw = None
-        self.pass_cis = None
-        self.pass_cis_en = None
+        self.key_pass = None
+        self.p_un_sup = None
+        self.p_sw = None
+        self.my_key = None
+        self.my_key_e = None
 
         # Блок заголовков и полей ввода строками
         label_mnem = QtWidgets.QLabel("Мнемокод: ")
@@ -137,6 +141,22 @@ class MainWindow(QtWidgets.QWidget):
         self.but_free_port.clicked.connect(self.get_free_port)
         self.but_speed_edit.clicked.connect(self.edit_speed_file)
 
+    def decrypt_pass(self):
+        if self.key_pass:
+            try:
+                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
+                self.p_un_sup = cipher.decrypt(settings.p_un_sup).decode().split('1111')[0]
+                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
+                self.p_sw = cipher.decrypt(settings.p_sw).decode().split('1111')[0]
+                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
+                self.my_key = cipher.decrypt(settings.my_key).decode().split('1111')[0]
+                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
+                self.my_key_e = cipher.decrypt(settings.my_key_e).decode().split('1111')[0]
+            except:
+                self.key_pass = None
+            finally:
+                return True
+
     def disable_button(self):
         """ Функция включает/отключает кнопки в зависимости от заполнения полей """
         _chek = (len(self.edit_mnem.text())
@@ -219,18 +239,35 @@ class MainWindow(QtWidgets.QWidget):
             print(f"Ошибка открытия файла клиентов со скоростями: {_path_to_speed}")
 
     def get_free_vlan(self):
-        print("Свободный влан")
-        _city = self.city_list.currentText()
-        print(_city)
-        # res = create_cl_cisco.get_free_interface(_city)
-        # print(res)
-        # if not res:
-        #     res = f'Error connect to cisco: {_city}'
-        #
-        # print(res)
+        if self.key_pass:
+            print("Свободный влан")
+            _city = self.city_list.currentText()
+            print(_city)
+            # print(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
+            try:
+                _cisco = create_cl_cisco.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
+            except Exception as e:
+                print(f"Ошибка создания интерфейса Cisco {e}")
+            else:
+                res = _cisco.get_free_interface()
+                if not res:
+                    res = f'Error connect to cisco: {_city}'
+                # print(res)
+                QtWidgets.QInputDialog.getMultiLineText(None,
+                                                        "Свободные интерфейсы",
+                                                        f"Свободные интерфейсы на Cisco {_city}",
+                                                        text=res)
 
     def get_free_port(self):
-        print("Свободный порт")
+        if self.key_pass:
+            print("Свободный порт")
+            _sw = switch.NewSwitch(self.edit_ipsw.text(), sw_passw=self.p_sw)
+            res = '\n'.join(_sw.find_free_port())
+            print(f'{res}')
+            QtWidgets.QInputDialog.getMultiLineText(None,
+                                                    "Свободные порты",
+                                                    f"Свободные порты на свитче {self.edit_ipsw.text()}",
+                                                    text=res)
 
     # Запуск действия
     def run_b(self):
@@ -252,6 +289,16 @@ if __name__ == "__main__":
     window.setWindowTitle("Работа с клиентами.")
     window.resize(400, 200)
     window.setWindowIcon(ico)
+
+    # Запрос ключа для рассшифровки паролей
+    dialog_pass = QtWidgets.QInputDialog()
+    dialog_pass.setWindowTitle("Ключ для работы с устройствами.")
+    dialog_pass.setLabelText("Введите ключ, для разблокировки паролей:")
+    dialog_pass.setTextEchoMode(QtWidgets.QLineEdit.Password)
+    get_pass = dialog_pass.exec()
+    if get_pass == QtWidgets.QDialog.Accepted:
+        window.key_pass = dialog_pass.textValue()
+        window.decrypt_pass()
 
     window.show()
 

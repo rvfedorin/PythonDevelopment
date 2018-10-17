@@ -13,7 +13,7 @@ from re import search
 
 
 class NewSwitch:
-    def __init__(self, ip, sw_login='login', sw_passw='pass'):
+    def __init__(self, ip, sw_login='admin', sw_passw='pass'):
         self.ip = ip
         self.login = sw_login.encode()
         self.passw = sw_passw.encode()
