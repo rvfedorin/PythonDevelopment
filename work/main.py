@@ -78,6 +78,8 @@ class MainWindow(QtWidgets.QMainWindow):
                                         text)
 
     def path_sw(self):
+        """ Поиск пути до свитча с линками """
+        # Окно запроса начало
         _win = QtWidgets.QDialog()
         _win.setWindowTitle("Поиск цепочки подключения свитча.")
         _form = QtWidgets.QFormLayout()
@@ -98,23 +100,27 @@ class MainWindow(QtWidgets.QMainWindow):
         _form.addRow(_but_ok, _but_cancel)
 
         _win.setLayout(_form)
+        # Окно запроса конец
 
         result = _win.exec()
         if result and _sw_ent.text():
             _city = _city_list.currentText()
             _key = self.window.city[_city]
+
+            # Пробуем вытянуть данные из базы по городу
             try:
                 city_db = work_with_db.get_data_from_db(_key)
-                print(city_db)
             except Exception as e:
                 print(f"Ошибка доступа к базе. {e}")
-                raise(f"Ошибка доступа к базе. {e}")
+                raise Exception("Ошибка доступа к базе. {e}")
 
             if city_db is not None:
                 ended_switch = _sw_ent.text()
                 city = str(city_db['city']).strip()
                 root_port = str(city_db['root_port']).strip()
                 root_sw = str(city_db['root_sw']).strip()
+
+                # Пробуем получить данные из интранета
                 try:
                     column_ip = tools.get_data_from_intranet(_key)
                 except Exception as e:
@@ -122,7 +128,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 else:
                     _path_to_sw = full_path_to_sw.full_path(ended_switch, column_ip, root_port, root_sw, city)
                     if _path_to_sw[0]:
-                        print(_path_to_sw[1])
+                        _path_with_links = full_path_to_sw.type_connection(_path_to_sw[1], _passw=self.window.p_sw)
+                        print(_path_with_links[1])
+                    else:
+                        text = f'Switch <<{ended_switch}>> not found. \n' \
+                               f'gui_main.py -> class FullPathToSw -> def get() \n' \
+                               f'_path_to_sw = False'
+                        QtWidgets.QMessageBox.about(None,
+                                                    "Поиск пути",
+                                                    text)
 
 
 

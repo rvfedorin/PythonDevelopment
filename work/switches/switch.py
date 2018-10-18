@@ -139,7 +139,8 @@ class NewSwitch:
 
     # выполнить список комманд на свитче
     def send_command(self, command_list):
-        res = ''
+        text = ''
+        res = []
         tn = self.connect()
         if tn[0] is False:
             return False
@@ -147,9 +148,10 @@ class NewSwitch:
             tn = tn[1]
         try:
             for com in command_list:
-                res += tn.read_until(b'#', timeout=1).decode()
+                text += tn.read_until(b'#', timeout=1).decode()
                 tn.write(com.encode())
-                res += tn.read_until(b'#', timeout=1).decode()
+                text += tn.read_until(b'#', timeout=1).decode()
+                res.append(text)
             tn.write(b"logout\n")
         finally:
             tn.close()

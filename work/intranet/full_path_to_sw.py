@@ -4,6 +4,7 @@
 
 from re import findall, sub
 from sys import exc_info
+from threading import Thread
 
 from work.switches import switch
 
@@ -70,7 +71,7 @@ def full_path(look_for_sw, stolbec_ip, root_port, root_sw, name_op):
     return [True, root_port + full_path_string]
 
 
-def type_connection(full_path_switch: str, _login, _passw):
+def type_connection(full_path_switch: str, _passw, _login='admin'):
     # full_path_switch = 28-172.16.48.254-10--26-172.16.43.238-4--1-172.17.155.10
 
     _trace = False
@@ -82,14 +83,13 @@ def type_connection(full_path_switch: str, _login, _passw):
         switch_ports = sw_line.split('-')
         switch_obj = switch.NewSwitch(switch_ports[1], _login, _passw)
         if len(switch_ports) > 2:
-            port_up = f'sh ports {switch_ports[0]}\n'
-            port_down = f'sh ports {switch_ports[2]}\n'
+            port_up = f'sh ports {switch_ports[0]}\nq\n'
+            port_down = f'sh ports {switch_ports[2]}\nq\n'
 
-            port_up = switch_obj.send_command([port_up, 'q\n'])
-            port_down = switch_obj.send_command([port_down, 'q\n'])
+            port_up, port_down = switch_obj.send_command([port_up, port_down])
         else:
             port_up = f'sh ports {switch_ports[0]}\n'
-            port_up = switch_obj.send_command([port_up, 'q\n'])
+            port_up = ''.join(switch_obj.send_command([port_up, 'q\n']))
             switch_ports.append('Client.')
             port_down = '-?-)'
 
