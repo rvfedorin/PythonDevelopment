@@ -122,7 +122,7 @@ def type_connection(full_path_switch: str, _passw, _login='admin'):
         connect = f'({switch_ports[0]}{port_up})-{switch_ports[1]}-({switch_ports[2]}{port_down}'
 
         new_path += connect
-    if _trace: print(f'===========\n{new_path}\n===========')
+
     return [True, new_path]
 
 

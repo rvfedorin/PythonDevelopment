@@ -130,6 +130,11 @@ class MainWindow(QtWidgets.QMainWindow):
                     if _path_to_sw[0]:
                         _path_with_links = full_path_to_sw.type_connection(_path_to_sw[1], _passw=self.window.p_sw)
                         print(_path_with_links[1])
+                        _title = f'Путь до {ended_switch} ' + '_' * len(_path_to_sw[1])
+                        QtWidgets.QInputDialog.getMultiLineText(None,
+                                                                "Путь до свитча",
+                                                                _title,
+                                                                text=_path_with_links[1])
                     else:
                         text = f'Switch <<{ended_switch}>> not found. \n' \
                                f'gui_main.py -> class FullPathToSw -> def get() \n' \
@@ -399,9 +404,10 @@ class ContentWindow(QtWidgets.QWidget):
                 if not res:
                     res = f'Error connect to cisco: {_city}'
                 # print(res)
+                _title = f"Свободные интерфейсы на Cisco {_city} " + '_' * 40
                 QtWidgets.QInputDialog.getMultiLineText(None,
                                                         "Свободные интерфейсы",
-                                                        f"Свободные интерфейсы на Cisco {_city}",
+                                                        _title,
                                                         text=res)
 
     def get_free_port(self):
@@ -411,7 +417,7 @@ class ContentWindow(QtWidgets.QWidget):
                 _sw = switch.NewSwitch(self.edit_ipsw.text(), sw_passw=self.p_sw)
                 res = '\n'.join(_sw.find_free_port())
             except Exception as e:
-                print (f"Ошибка при поиске порта {e}")
+                print(f"Ошибка при поиске порта {e}")
             else:
                 print(f'{res}')
                 QtWidgets.QInputDialog.getMultiLineText(None,
