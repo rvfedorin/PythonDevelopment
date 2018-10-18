@@ -138,8 +138,7 @@ class NewSwitch:
         return all_free_ports
 
     # выполнить список комманд на свитче
-    def send_command(self, command_list):
-        text = ''
+    def send_command(self, command_list, _dict_done=None):
         res = []
         tn = self.connect()
         if tn[0] is False:
@@ -148,6 +147,8 @@ class NewSwitch:
             tn = tn[1]
         try:
             for com in command_list:
+                text = ''
+                # print(f"    |_send command to {self.ip}")
                 text += tn.read_until(b'#', timeout=1).decode()
                 tn.write(com.encode())
                 text += tn.read_until(b'#', timeout=1).decode()
@@ -155,7 +156,12 @@ class NewSwitch:
             tn.write(b"logout\n")
         finally:
             tn.close()
-        return res
+        if _dict_done:
+            _dict_done[self.ip] = res
+        else:
+            return res
+
+
 
 
 if __name__ == '__main__':

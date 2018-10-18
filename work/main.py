@@ -139,8 +139,6 @@ class MainWindow(QtWidgets.QMainWindow):
                                                     text)
 
 
-
-
     def connected_sw(self):
         pass
 

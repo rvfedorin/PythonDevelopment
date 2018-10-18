@@ -4,7 +4,7 @@
 
 from re import findall, sub
 from sys import exc_info
-from threading import Thread
+import multiprocessing as mp
 
 from work.switches import switch
 
@@ -79,17 +79,39 @@ def type_connection(full_path_switch: str, _passw, _login='admin'):
     _speed = {'10G': 'TenG', '1000M': 'Gi', '100M': 'Fa'}
     new_path = ''
     full_path_switch = full_path_switch.split('--')
+    _dict_done = mp.Manager().dict()
+    _dict_done["start"] = "start"
+    _processes_list = []
+
+    # processes for get links
     for sw_line in full_path_switch:
+
         switch_ports = sw_line.split('-')
         switch_obj = switch.NewSwitch(switch_ports[1], _login, _passw)
+
         if len(switch_ports) > 2:
             port_up = f'sh ports {switch_ports[0]}\nq\n'
             port_down = f'sh ports {switch_ports[2]}\nq\n'
-
-            port_up, port_down = switch_obj.send_command([port_up, port_down])
+            process_sw = mp.Process(target=switch_obj.send_command, args=([port_up, port_down], _dict_done))
+            # port_up, port_down = switch_obj.send_command([port_up, port_down], queue=queue)
         else:
             port_up = f'sh ports {switch_ports[0]}\n'
-            port_up = ''.join(switch_obj.send_command([port_up, 'q\n']))
+            process_sw = mp.Process(target=switch_obj.send_command, args=([port_up, 'q\n'], _dict_done))
+
+        process_sw.start()
+        _processes_list.append(process_sw)
+
+    for process_sw in _processes_list:
+        process_sw.join()
+
+    # print(_dict_done)
+
+    for sw_line in full_path_switch:
+        switch_ports = sw_line.split('-')
+        if len(switch_ports) > 2:
+            port_up, port_down = _dict_done[switch_ports[1]]
+        else:
+            port_up = ''.join(_dict_done[switch_ports[1]])
             switch_ports.append('Client.')
             port_down = '-?-)'
 
