@@ -8,6 +8,7 @@ from work import settings
 from work.tools import work_with_db
 from work.cisco import create_cl_cisco
 from work.switches import switch
+from work.intranet import full_path_to_sw, tools
 
 
 def get_list_cities():
@@ -21,9 +22,131 @@ def get_list_cities():
     return cities_keys
 
 
-class MainWindow(QtWidgets.QWidget):
+class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__(parent=parent)
+        self.setWindowTitle("Работа с клиентами.")
+        self.window = ContentWindow(self)
+        self.init_ui()
+
+    def init_ui(self):
+        # self.statusBar().showMessage("Ready")
+        main_menu = self.menuBar()
+
+        self.setCentralWidget(self.window)
+
+        # МЕНЮ
+        menu_tools = main_menu.addMenu('Tools')
+        menu_tools_db = menu_tools.addAction("Work with DB")
+        menu_tools_db.triggered.connect(self.work_db)
+        menu_tools_cml = menu_tools.addAction("Create multy vlan")
+        menu_tools_cml.triggered.connect(self.crea_mv)
+        menu_tools_dml = menu_tools.addAction("Delete multy vlan")
+        menu_tools_dml.triggered.connect(self.dele_mv)
+
+        menu_switch = main_menu.addMenu('Switch')
+        menu_switch_path = menu_switch.addAction("Path to switch")
+        menu_switch_path.triggered.connect(self.path_sw)
+        menu_switch_connected = menu_switch.addAction("All connected from switch")
+        menu_switch_connected.triggered.connect(self.connected_sw)
+
+        menu_help = main_menu.addMenu('Help')
+        menu_help_manual = menu_help.addAction("Manual")
+        menu_help_manual.triggered.connect(self.help)
+        menu_help_about = menu_help.addAction("About")
+        menu_help_about.triggered.connect(self.about)
+        # МЕНЮ
+
+    @staticmethod
+    def about():
+        QtWidgets.QMessageBox.about(None,
+                                    "О программе",
+                                    "Version 1.0.0\nPowered by Roman Fedorin")
+
+    @staticmethod
+    def help():
+        _path = os.path.abspath(os.getcwd() + settings.help_file)
+
+        try:
+            with open(_path, 'r') as f:
+                text = ''.join(f.readlines())
+        except Exception as e:
+            print(f"Ошибка открытия файла с мануалом. {e}")
+        else:
+            QtWidgets.QMessageBox.about(None,
+                                        "Инструкция",
+                                        text)
+
+    def path_sw(self):
+        _win = QtWidgets.QDialog()
+        _win.setWindowTitle("Поиск цепочки подключения свитча.")
+        _form = QtWidgets.QFormLayout()
+
+        _city_list = QtWidgets.QComboBox()
+        _city_list.addItems(sorted(self.window.city))
+        _city_list.setCurrentText(self.window.city_list.currentText())
+        _sw_ent = QtWidgets.QLineEdit()
+        _sw_ent.setValidator(QtGui.QRegExpValidator(self.window.regexp_ip))
+
+        _but_ok = QtWidgets.QPushButton("Ok")
+        _but_ok.clicked.connect(_win.accept)
+        _but_cancel = QtWidgets.QPushButton("Cancel")
+        _but_cancel.clicked.connect(_win.reject)
+
+        _form.addRow(_city_list)
+        _form.addRow("IP свитча: ", _sw_ent)
+        _form.addRow(_but_ok, _but_cancel)
+
+        _win.setLayout(_form)
+
+        result = _win.exec()
+        if result and _sw_ent.text():
+            _city = _city_list.currentText()
+            _key = self.window.city[_city]
+            try:
+                city_db = work_with_db.get_data_from_db(_key)
+                print(city_db)
+            except Exception as e:
+                print(f"Ошибка доступа к базе. {e}")
+                raise(f"Ошибка доступа к базе. {e}")
+
+            if city_db is not None:
+                ended_switch = _sw_ent.text()
+                city = str(city_db['city']).strip()
+                root_port = str(city_db['root_port']).strip()
+                root_sw = str(city_db['root_sw']).strip()
+                try:
+                    column_ip = tools.get_data_from_intranet(_key)
+                except Exception as e:
+                    print(f"Ошибка поиска в интранете. {e}")
+                else:
+                    _path_to_sw = full_path_to_sw.full_path(ended_switch, column_ip, root_port, root_sw, city)
+                    if _path_to_sw[0]:
+                        print(_path_to_sw[1])
+
+
+
+
+    def connected_sw(self):
+        pass
+
+    def work_db(self):
+        pass
+
+    def crea_mv(self):
+        pass
+
+    def dele_mv(self):
+        pass
+
+
+class ContentWindow(QtWidgets.QWidget):
+    def __init__(self, parent=None, ico=None):
+        super().__init__(parent=parent)
+        self.setWindowTitle("Работа с клиентами.")
+        self.resize(400, 300)  # x, y
+        if ico:
+            self.setWindowIcon(ico)
         self.all_fields_full = 0
         self.city = work_with_db.get_list_cities()  # Словарь горд:ключ
         self.city_pref = {v: k for k, v in self.city.items()}  # Словарь ключ:город
@@ -32,6 +155,10 @@ class MainWindow(QtWidgets.QWidget):
         self.p_sw = None
         self.my_key = None
         self.my_key_e = None
+
+        self.init_ui()
+
+    def init_ui(self):
 
         # Блок заголовков и полей ввода строками
         label_mnem = QtWidgets.QLabel("Мнемокод: ")
@@ -47,8 +174,8 @@ class MainWindow(QtWidgets.QWidget):
         self.edit_ipsw = QtWidgets.QLineEdit()
         str_ip = '^((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])' \
                  '(\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])){3})$;'
-        regexp_ip = QtCore.QRegExp(str_ip)
-        self.edit_ipsw.setValidator(QtGui.QRegExpValidator(regexp_ip))
+        self.regexp_ip = QtCore.QRegExp(str_ip)
+        self.edit_ipsw.setValidator(QtGui.QRegExpValidator(self.regexp_ip))
 
         self.edit_port = QtWidgets.QLineEdit()
         self.edit_port.setValidator(QtGui.QIntValidator())
@@ -141,6 +268,8 @@ class MainWindow(QtWidgets.QWidget):
         self.but_free_port.clicked.connect(self.get_free_port)
         self.but_speed_edit.clicked.connect(self.edit_speed_file)
 
+        # self.show()
+
     def decrypt_pass(self):
         if self.key_pass:
             try:
@@ -152,7 +281,8 @@ class MainWindow(QtWidgets.QWidget):
                 self.my_key = cipher.decrypt(settings.my_key).decode().split('1111')[0]
                 cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
                 self.my_key_e = cipher.decrypt(settings.my_key_e).decode().split('1111')[0]
-            except:
+            except Exception as e:
+                print(f"Error while encoded passwords. {e}")
                 self.key_pass = None
             finally:
                 return True
@@ -183,7 +313,8 @@ class MainWindow(QtWidgets.QWidget):
 
     # Отключаем поля в завичимости от выбранного действия
     def disable_entry(self):
-        """ Функция включает/отключает поля, в зависимости от выбранного действия [удаление, создание, скорость]"""
+        """ Функция включает/отключает поля и кнопки,
+        в зависимости от выбранного действия [удаление, создание, скорость]"""
         if self.rb_create.isChecked():
             if self.edit_mnem.text() == 'All in file':  # если переходим со вкладки смены скорости
                 self.edit_mnem.setText('')
@@ -195,6 +326,7 @@ class MainWindow(QtWidgets.QWidget):
                 self.but_speed_edit.setVisible(False)
                 self.check_cisco.setVisible(True)
                 self.check_tag.setDisabled(False)
+                self.but_free_port.setDisabled(False)
             self.edit_port.setText('')
             self.check_cisco.setText("Создать на Cisco")
             self.edit_port.setDisabled(False)
@@ -208,6 +340,7 @@ class MainWindow(QtWidgets.QWidget):
                 self.edit_vlan.setDisabled(False)
                 self.edit_ipsw.setDisabled(False)
                 self.check_tag.setDisabled(False)
+                self.but_free_port.setDisabled(False)
                 self.but_speed_edit.setVisible(False)
                 self.check_cisco.setVisible(True)
 
@@ -226,6 +359,7 @@ class MainWindow(QtWidgets.QWidget):
             self.edit_ipsw.setDisabled(True)
             self.edit_port.setDisabled(True)
             self.check_tag.setDisabled(True)
+            self.but_free_port.setDisabled(True)
 
             self.check_cisco.setVisible(False)
             self.but_speed_edit.setVisible(True)
@@ -261,13 +395,17 @@ class MainWindow(QtWidgets.QWidget):
     def get_free_port(self):
         if self.key_pass:
             print("Свободный порт")
-            _sw = switch.NewSwitch(self.edit_ipsw.text(), sw_passw=self.p_sw)
-            res = '\n'.join(_sw.find_free_port())
-            print(f'{res}')
-            QtWidgets.QInputDialog.getMultiLineText(None,
-                                                    "Свободные порты",
-                                                    f"Свободные порты на свитче {self.edit_ipsw.text()}",
-                                                    text=res)
+            try:
+                _sw = switch.NewSwitch(self.edit_ipsw.text(), sw_passw=self.p_sw)
+                res = '\n'.join(_sw.find_free_port())
+            except Exception as e:
+                print (f"Ошибка при поиске порта {e}")
+            else:
+                print(f'{res}')
+                QtWidgets.QInputDialog.getMultiLineText(None,
+                                                        "Свободные порты",
+                                                        f"Свободные порты на свитче {self.edit_ipsw.text()}",
+                                                        text=res)
 
     # Запуск действия
     def run_b(self):
@@ -285,10 +423,8 @@ class MainWindow(QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     ico = QtGui.QIcon("ico.jpg")
-    window = MainWindow()
-    window.setWindowTitle("Работа с клиентами.")
-    window.resize(400, 200)
-    window.setWindowIcon(ico)
+    main_window = MainWindow()
+    main_window.setWindowIcon(ico)
 
     # Запрос ключа для рассшифровки паролей
     dialog_pass = QtWidgets.QInputDialog()
@@ -297,9 +433,9 @@ if __name__ == "__main__":
     dialog_pass.setTextEchoMode(QtWidgets.QLineEdit.Password)
     get_pass = dialog_pass.exec()
     if get_pass == QtWidgets.QDialog.Accepted:
-        window.key_pass = dialog_pass.textValue()
-        window.decrypt_pass()
+        main_window.window.key_pass = dialog_pass.textValue()
+        main_window.window.decrypt_pass()
 
-    window.show()
+    main_window.show()
 
     sys.exit(app.exec_())

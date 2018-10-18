@@ -200,7 +200,7 @@ def delete_from_cisco(state, client_list):
 
 
 if __name__ == '__main__':
-    from customers import Customer
+    from work.tools.customers import Customer
     state = 'Orel'
 
     cl_data = [state, 'Orel-Invento', 1228, '172.16.43.86', 15, 'T']

@@ -1,5 +1,5 @@
 # Created by Fedorint Roman
-# Script create path to switch
+# Script create switch
 # ver 1.0.0
 
 from telnetlib import Telnet
