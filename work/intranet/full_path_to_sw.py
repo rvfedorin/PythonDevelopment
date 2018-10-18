@@ -93,7 +93,6 @@ def type_connection(full_path_switch: str, _passw, _login='admin'):
             port_up = f'sh ports {switch_ports[0]}\nq\n'
             port_down = f'sh ports {switch_ports[2]}\nq\n'
             process_sw = mp.Process(target=switch_obj.send_command, args=([port_up, port_down], _dict_done))
-            # port_up, port_down = switch_obj.send_command([port_up, port_down], queue=queue)
         else:
             port_up = f'sh ports {switch_ports[0]}\n'
             process_sw = mp.Process(target=switch_obj.send_command, args=([port_up, 'q\n'], _dict_done))
@@ -104,8 +103,6 @@ def type_connection(full_path_switch: str, _passw, _login='admin'):
     for process_sw in _processes_list:
         process_sw.join()
 
-    # print(_dict_done)
-
     for sw_line in full_path_switch:
         switch_ports = sw_line.split('-')
         if len(switch_ports) > 2:
@@ -115,20 +112,12 @@ def type_connection(full_path_switch: str, _passw, _login='admin'):
             switch_ports.append('Client.')
             port_down = '-?-)'
 
-        if _trace: print(f'=====START===UP===\n{port_up}\n======END===UP==')
-        if _trace: print(f'=====START===DOWN===\n{port_down}\n======END===DOWN==')
-        # port_up = '(Fa)' if '100M' in port_up else '(Gi)' if '1000M' in port_up else '?'
-        # port_down = '(Fa)-->' if '100M' in port_down else '(Gi)-->' if '1000M' in port_down else '?'
-
         for key in _speed:
             if key in port_up:
                 port_up = _speed[key]
 
             if key in port_down:
                 port_down = f'{_speed[key]})-->'
-
-        if len(port_up) > 10: port_down = '?'
-        if len(port_down) > 10: port_down = '?)-->'
 
         connect = f'({switch_ports[0]}{port_up})-{switch_ports[1]}-({switch_ports[2]}{port_down}'
 

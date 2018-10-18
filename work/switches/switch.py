@@ -162,8 +162,6 @@ class NewSwitch:
             return res
 
 
-
-
 if __name__ == '__main__':
     passw = input("pass: ")
     sw = NewSwitch('172.16.48.254', 'admin', passw)
