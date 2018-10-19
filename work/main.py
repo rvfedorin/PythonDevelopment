@@ -137,12 +137,11 @@ class MainWindow(QtWidgets.QMainWindow):
                                                                 text=_path_with_links[1])
                     else:
                         text = f'Switch <<{ended_switch}>> not found. \n' \
-                               f'gui_main.py -> class FullPathToSw -> def get() \n' \
+                               f'main.py -> class MainWindow -> path_sw(self) \n' \
                                f'_path_to_sw = False'
                         QtWidgets.QMessageBox.about(None,
                                                     "Поиск пути",
                                                     text)
-
 
     def connected_sw(self):
         pass

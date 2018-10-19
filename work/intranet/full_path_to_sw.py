@@ -6,7 +6,7 @@ from re import findall, sub
 from sys import exc_info
 import multiprocessing as mp
 
-from work.switches import switch
+from work.switches import tools as sw_tools
 
 
 def format_connect(path_up, for_switch):
@@ -87,15 +87,14 @@ def type_connection(full_path_switch: str, _passw, _login='admin'):
     for sw_line in full_path_switch:
 
         switch_ports = sw_line.split('-')
-        switch_obj = switch.NewSwitch(switch_ports[1], _login, _passw)
-
+        _ip = switch_ports[1]
         if len(switch_ports) > 2:
             port_up = f'sh ports {switch_ports[0]}\nq\n'
             port_down = f'sh ports {switch_ports[2]}\nq\n'
-            process_sw = mp.Process(target=switch_obj.send_command, args=([port_up, port_down], _dict_done))
+            process_sw = mp.Process(target=sw_tools.send_command, args=([port_up, port_down], _ip, _passw, _dict_done))
         else:
             port_up = f'sh ports {switch_ports[0]}\n'
-            process_sw = mp.Process(target=switch_obj.send_command, args=([port_up, 'q\n'], _dict_done))
+            process_sw = mp.Process(target=sw_tools.send_command, args=([port_up, 'q\n'], _ip, _passw, _dict_done))
 
         process_sw.start()
         _processes_list.append(process_sw)
