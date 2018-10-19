@@ -48,6 +48,72 @@ class PathSwThread(QtCore.QThread):
                     self.mysignal.emit(f"{self.ended_switch}XXX{_path_with_links[1]}")
 
 
+class WorkWithDB(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent, QtCore.Qt.Window)
+        self.cities = get_list_cities()  # город:префикс
+
+        self.build()
+
+    def build(self):
+        self.form = QtWidgets.QFormLayout(self)
+
+        self.cities_list = QtWidgets.QComboBox()
+        self.cities_list.addItems(sorted(self.cities))
+        self.cities_list.currentIndexChanged.connect(self.get_data)
+
+        self.prefix_entry = QtWidgets.QLineEdit()
+        self.city_entry = QtWidgets.QLineEdit()
+        self.root_sw_entry = QtWidgets.QLineEdit()
+        self.root_port_entry = QtWidgets.QLineEdit()
+        self.col_sw_entry = QtWidgets.QLineEdit()
+        self.unix_entry = QtWidgets.QLineEdit()
+
+        self.but_get_data = QtWidgets.QPushButton("Загрузить данныее")
+        self.but_get_data.clicked.connect(self.get_data)
+
+        self.form.addRow(self.cities_list)
+        self.form.addRow("Префикс мнемокода: ", self.prefix_entry)
+        self.form.addRow("Город: ", self.city_entry)
+        self.form.addRow("Корневой свитч: ", self.root_sw_entry)
+        self.form.addRow("Порт подключения cisco: ", self.root_port_entry)
+        self.form.addRow("Колонка с IP свитчей: ", self.col_sw_entry)
+        self.form.addRow("Unix: ", self.unix_entry)
+        self.form.addRow(self.but_get_data)
+
+    def get_data(self, _city):
+
+        if _city:
+            _city = self.cities_list.currentText()
+            _key = self.cities[_city]
+
+            res = work_with_db.get_data_from_db(_key)
+            print(res)
+            if res is not None:
+                self.prefix_entry.setText(_key)
+                self.city_entry.setText(res['city'])
+                self.root_sw_entry.setText(res['root_sw'])
+                self.root_port_entry.setText(res['root_port'])
+                # self.col_sw_entry.setText(res['col_sw'])
+                # self.unix_entry.setText(res['unix'])
+            #
+            #
+            #     # for i in self.bd.data:
+            #     #     if i != 'key':
+            #     #         self.bd.data[i].delete(0, 'end')
+            #     #         self.bd.data[i].insert(0, res[i])
+            # else:
+            #     text = f'The key <<{_key}>> not found.'
+            #     QtWidgets.QMessageBox.information(None,
+            #                                       "База данных",
+            #                                       text)
+        else:
+            text = 'Вам необходимо указать префикс или выбрать город из списка.'
+            QtWidgets.QMessageBox.information(None,
+                                        "База данных",
+                                        text)
+
+
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -64,6 +130,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # МЕНЮ
         menu_tools = main_menu.addMenu('Tools')
+        menu_tools.menuAction().setStatusTip("Work with DB; Create/Delete multivlan")
         menu_tools_db = menu_tools.addAction("Work with DB")
         menu_tools_db.triggered.connect(self.work_db)
         menu_tools_cml = menu_tools.addAction("Create multy vlan")
@@ -72,12 +139,14 @@ class MainWindow(QtWidgets.QMainWindow):
         menu_tools_dml.triggered.connect(self.dele_mv)
 
         menu_switch = main_menu.addMenu('Switch')
+        menu_switch.menuAction().setStatusTip("Path to switch; All connected from switch")
         menu_switch_path = menu_switch.addAction("Path to switch")
         menu_switch_path.triggered.connect(self.path_sw_runner)
         menu_switch_connected = menu_switch.addAction("All connected from switch")
         menu_switch_connected.triggered.connect(self.connected_sw)
 
         menu_help = main_menu.addMenu('Help')
+        menu_help.menuAction().setStatusTip("Help; About")
         menu_help_manual = menu_help.addAction("Manual")
         menu_help_manual.triggered.connect(self.help)
         menu_help_about = menu_help.addAction("About")
@@ -238,9 +307,9 @@ class MainWindow(QtWidgets.QMainWindow):
                                                     _title,
                                                     text=text)
 
-
     def work_db(self):
-        pass
+        self.win_db = WorkWithDB()
+        self.win_db.show()
 
     def crea_mv(self):
         pass
