@@ -3,6 +3,7 @@ import sys
 import os
 import shelve
 from Cryptodome.Cipher import Blowfish
+from multiprocessing import Process, Manager
 
 from work import settings
 from work.tools import work_with_db
@@ -14,6 +15,7 @@ from work.intranet import full_path_to_sw, tools, all_neighbor
 def get_list_cities():
     """ Function reads all keys of cities from shelveDB """
     city_shelve = os.path.abspath(os.getcwd() + settings.city_shelve)
+    print(city_shelve)
     cities_keys = {}
     with shelve.open(city_shelve) as db:
         for key in db:
@@ -24,28 +26,12 @@ def get_list_cities():
 class PathSwThread(QtCore.QThread):
     mysignal = QtCore.pyqtSignal(str)
 
-    def __init__(self, ended_switch, column_ip, root_port, root_sw, city, p_sw):
-        super(PathSwThread, self).__init__()
-        self.ended_switch = ended_switch
-        self.column_ip = column_ip
-        self.root_port = root_port
-        self.root_sw = root_sw
-        self.city = city
-        self.p_sw = p_sw
+    def __init__(self, parent=None):
+        super(PathSwThread, self).__init__(parent)
 
-    def run(self):
-        try:
-            _path_to_sw = full_path_to_sw.full_path(self.ended_switch, self.column_ip, self.root_port, self.root_sw, self.city)
-        except Exception as e:
-            print(e)
-        else:
-            if _path_to_sw[0]:
-                try:
-                    _path_with_links = full_path_to_sw.type_connection(_path_to_sw[1], _passw=self.p_sw)
-                except Exception as e:
-                    print(e)
-                else:
-                    self.mysignal.emit(f"{self.ended_switch}XXX{_path_with_links[1]}")
+    def run(self, *args, **kwargs):
+        print("RUN")
+        self.mysignal.emit("FromTHREAD")
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -53,14 +39,15 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(parent=parent)
         self.setWindowTitle("Работа с клиентами.")
         self.window = ContentWindow(self)
-        self.action = True
         self.init_ui()
 
     def init_ui(self):
-        self.statusBar().showMessage("Ready")
+        # self.statusBar().showMessage("Ready")
         main_menu = self.menuBar()
 
         self.setCentralWidget(self.window)
+
+        self.path_sw = PathSwThread()
 
         # МЕНЮ
         menu_tools = main_menu.addMenu('Tools')
@@ -73,7 +60,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         menu_switch = main_menu.addMenu('Switch')
         menu_switch_path = menu_switch.addAction("Path to switch")
-        menu_switch_path.triggered.connect(self.path_sw_runner)
+        menu_switch_path.triggered.connect(self.path_sw.start)
         menu_switch_connected = menu_switch.addAction("All connected from switch")
         menu_switch_connected.triggered.connect(self.connected_sw)
 
@@ -105,7 +92,11 @@ class MainWindow(QtWidgets.QMainWindow):
                                         text)
 
     def path_sw_runner(self):
-        self.statusBar().showMessage("Идёт поиск пути до свитча ...")
+        # _pr = Process(target=self.path_sw)
+        # _pr.start()
+
+    def path_sw(self):
+        """ Поиск пути до свитча с линками """
         # Окно запроса начало
         _win = QtWidgets.QDialog()
         _win.setWindowTitle("Поиск цепочки подключения свитча.")
@@ -153,27 +144,23 @@ class MainWindow(QtWidgets.QMainWindow):
                 except Exception as e:
                     print(f"Ошибка поиска в интранете. {e}")
                 else:
-                    self._thread = PathSwThread(ended_switch, column_ip, root_port, root_sw, city, self.window.p_sw)
-                    self._thread.mysignal.connect(self.message_out)
-                    self._thread.start()
-        else:
-            self.statusBar().showMessage("Ready")
+                    _path_to_sw = full_path_to_sw.full_path(ended_switch, column_ip, root_port, root_sw, city)
+                    if _path_to_sw[0]:
+                        _path_with_links = full_path_to_sw.type_connection(_path_to_sw[1], _passw=self.window.p_sw)
+                        print(_path_with_links[1])
+                        _title = f'Путь до {ended_switch} ' + '_' * len(_path_to_sw[1])
+                        QtWidgets.QInputDialog.getMultiLineText(None,
+                                                                "Путь до свитча",
+                                                                _title,
+                                                                text=_path_with_links[1])
+                    else:
+                        text = f'Switch <<{ended_switch}>> not found. \n' \
+                               f'main.py -> class MainWindow -> path_sw(self) \n' \
+                               f'_path_to_sw = False'
+                        QtWidgets.QMessageBox.about(None,
+                                                    "Поиск пути",
+                                                    text)
 
-    def message_out(self, value, win_name=None):
-        """ Поиск пути до свитча с линками """
-        self.statusBar().showMessage("Ready")
-        if value:
-            text = value.split('XXX')
-            _title = f"Путь до свитча {text[0]} " + "_" * len(value)
-            _body = text[1]
-            if win_name:
-                win_name = 'Путь до свитча'
-            else:
-                win_name = win_name
-            QtWidgets.QInputDialog.getMultiLineText(None,
-                                                    win_name,
-                                                    _title,
-                                                    text=_body)
 
     def connected_sw(self):
         # Окно запроса начало
