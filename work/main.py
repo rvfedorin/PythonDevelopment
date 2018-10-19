@@ -69,8 +69,25 @@ class WorkWithDB(QtWidgets.QWidget):
         self.col_sw_entry = QtWidgets.QLineEdit()
         self.unix_entry = QtWidgets.QLineEdit()
 
-        self.but_get_data = QtWidgets.QPushButton("Загрузить данныее")
-        self.but_get_data.clicked.connect(self.get_data)
+        # START GROUP BOX
+        self.rb_create = QtWidgets.QRadioButton("Создать")
+        self.rb_create.setChecked(True)
+        self.rb_update = QtWidgets.QRadioButton("Обновить")
+        self.rb_delete = QtWidgets.QRadioButton("Удалить")
+
+
+        self.hbox_radio = QtWidgets.QHBoxLayout()
+        self.hbox_radio.addWidget(self.rb_create)
+        self.hbox_radio.addWidget(self.rb_update)
+        self.hbox_radio.addWidget(self.rb_delete)
+        self.group_box_radio = QtWidgets.QGroupBox("Выберите действие:")
+        self.group_box_radio.setLayout(self.hbox_radio)
+        # END GROUP BOX
+
+        self.but_run = QtWidgets.QPushButton(" Выполнить ")
+        self.but_run.clicked.connect(self.create_data)
+        self.but_quit = QtWidgets.QPushButton("Закрыть")
+        self.but_quit.clicked.connect(self.close)
 
         self.form.addRow(self.cities_list)
         self.form.addRow("Префикс мнемокода: ", self.prefix_entry)
@@ -79,39 +96,34 @@ class WorkWithDB(QtWidgets.QWidget):
         self.form.addRow("Порт подключения cisco: ", self.root_port_entry)
         self.form.addRow("Колонка с IP свитчей: ", self.col_sw_entry)
         self.form.addRow("Unix: ", self.unix_entry)
-        self.form.addRow(self.but_get_data)
+        self.form.addRow(self.group_box_radio)
+        self.form.addRow(self.but_run, self.but_quit)
 
     def get_data(self, _city):
-
         if _city:
             _city = self.cities_list.currentText()
             _key = self.cities[_city]
 
             res = work_with_db.get_data_from_db(_key)
-            print(res)
+
             if res is not None:
                 self.prefix_entry.setText(_key)
                 self.city_entry.setText(res['city'])
                 self.root_sw_entry.setText(res['root_sw'])
                 self.root_port_entry.setText(res['root_port'])
-                # self.col_sw_entry.setText(res['col_sw'])
-                # self.unix_entry.setText(res['unix'])
-            #
-            #
-            #     # for i in self.bd.data:
-            #     #     if i != 'key':
-            #     #         self.bd.data[i].delete(0, 'end')
-            #     #         self.bd.data[i].insert(0, res[i])
-            # else:
-            #     text = f'The key <<{_key}>> not found.'
-            #     QtWidgets.QMessageBox.information(None,
-            #                                       "База данных",
-            #                                       text)
+                self.col_sw_entry.setText(str(res['col_sw']))
+                self.unix_entry.setText(res['unix'])
         else:
             text = 'Вам необходимо указать префикс или выбрать город из списка.'
             QtWidgets.QMessageBox.information(None,
                                         "База данных",
                                         text)
+
+    def update_data(self):
+        pass
+
+    def create_data(self):
+        pass
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -359,9 +371,10 @@ class ContentWindow(QtWidgets.QWidget):
         self.edit_port.setValidator(QtGui.QIntValidator())
 
         self.check_tag = QtWidgets.QCheckBox("Untagged")
-        self.check_tag.setToolTip("По умолчанию tagged")
+        self.check_tag.setStatusTip("По умолчанию tagged")
 
         self.check_cisco = QtWidgets.QCheckBox("Создать на Cisco")
+        self.check_cisco.setStatusTip("Если не выбрать, действие будет выполнено только на свитчах.")
 
         self.rb_create = QtWidgets.QRadioButton("Создать")
         self.rb_create.setChecked(True)
@@ -374,7 +387,9 @@ class ContentWindow(QtWidgets.QWidget):
 
         # self.city_list.activated.connect(self.city_choise)
         self.but_free_vlan = QtWidgets.QPushButton(" Найти свободный влан")
+        self.but_free_vlan.setStatusTip("Найти свободный интерфейс в выбранном городе.")
         self.but_free_port = QtWidgets.QPushButton(" Найти свободный порт")
+        self.but_free_port.setStatusTip("Найти свободный порт на указанном свитче.")
         self.but_free_port.setToolTip("Необходимо, чтобы был указан IP свитча")
         self.but_free_port.setDisabled(True)
         self.but_speed_edit = QtWidgets.QPushButton(" Файл скоростей")
