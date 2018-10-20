@@ -8,6 +8,7 @@ client_to_change_speed = f'{data_path}cl_to_change_speed.txt'
 client_to_multi_vlan = f'{data_path}client_to_multi_vlan.txt'
 city_shelve = f'./{data_path}city.shelve'
 # log = '../log/'
+ico = "ico.jpg"
 
 iv = b'\x88\xc3p\\\xd6\xb8\xcb\xa3'
 p_un_sup = b'a&7\x89\xeca\x99%p!_\xef\xdd\xb9\x8f\x16'

@@ -51,6 +51,9 @@ class PathSwThread(QtCore.QThread):
 class WorkWithDB(QtWidgets.QWidget):
     def __init__(self, window, parent=None):
         super().__init__(parent, QtCore.Qt.Window)
+        ico = QtGui.QIcon(settings.ico)
+        self.setWindowIcon(ico)
+        self.setWindowTitle("Работа с базой данных.")
         self.cities = get_list_cities()  # город:префикс
         self.content_window = window
         self.build()
@@ -449,7 +452,7 @@ class ContentWindow(QtWidgets.QWidget):
     def __init__(self, parent=None, ico=None):
         super().__init__(parent=parent)
         self.setWindowTitle("Работа с клиентами.")
-        self.resize(410, 310)  # x, y
+        self.resize(400, 400)  # x, y
         if ico:
             self.setWindowIcon(ico)
         self.all_fields_full = 0
@@ -731,7 +734,7 @@ class ContentWindow(QtWidgets.QWidget):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    ico = QtGui.QIcon("ico.jpg")
+    ico = QtGui.QIcon(settings.ico)
     main_window = MainWindow()
     main_window.setWindowIcon(ico)
 
