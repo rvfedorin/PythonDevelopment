@@ -49,18 +49,22 @@ class PathSwThread(QtCore.QThread):
 
 
 class WorkWithDB(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, window, parent=None):
         super().__init__(parent, QtCore.Qt.Window)
         self.cities = get_list_cities()  # город:префикс
-
+        self.content_window = window
         self.build()
+
+    @property
+    def cities_revers(self):
+        return {v: k for k, v in self.cities.items()}
 
     def build(self):
         self.form = QtWidgets.QFormLayout(self)
 
         self.cities_list = QtWidgets.QComboBox()
         self.cities_list.addItems(sorted(self.cities))
-        self.cities_list.currentIndexChanged.connect(self.get_data)
+        self.cities_list.activated.connect(self.get_data)
 
         self.prefix_entry = QtWidgets.QLineEdit()
         self.city_entry = QtWidgets.QLineEdit()
@@ -75,7 +79,6 @@ class WorkWithDB(QtWidgets.QWidget):
         self.rb_update = QtWidgets.QRadioButton("Обновить")
         self.rb_delete = QtWidgets.QRadioButton("Удалить")
 
-
         self.hbox_radio = QtWidgets.QHBoxLayout()
         self.hbox_radio.addWidget(self.rb_create)
         self.hbox_radio.addWidget(self.rb_update)
@@ -85,7 +88,7 @@ class WorkWithDB(QtWidgets.QWidget):
         # END GROUP BOX
 
         self.but_run = QtWidgets.QPushButton(" Выполнить ")
-        self.but_run.clicked.connect(self.create_data)
+        self.but_run.clicked.connect(self.run_data)
         self.but_quit = QtWidgets.QPushButton("Закрыть")
         self.but_quit.clicked.connect(self.close)
 
@@ -99,11 +102,10 @@ class WorkWithDB(QtWidgets.QWidget):
         self.form.addRow(self.group_box_radio)
         self.form.addRow(self.but_run, self.but_quit)
 
-    def get_data(self, _city):
+    def get_data(self, event):
+        _city = self.cities_list.currentText()
         if _city:
-            _city = self.cities_list.currentText()
             _key = self.cities[_city]
-
             res = work_with_db.get_data_from_db(_key)
 
             if res is not None:
@@ -119,11 +121,124 @@ class WorkWithDB(QtWidgets.QWidget):
                                         "База данных",
                                         text)
 
-    def update_data(self):
-        pass
+    def run_data(self, event):
+        all_field = (self.prefix_entry.text()
+                     and self.city_entry.text()
+                     and self.root_sw_entry.text()
+                     and self.root_port_entry.text()
+                     and self.col_sw_entry.text()
+                     and self.unix_entry.text())
 
-    def create_data(self):
-        pass
+        if all_field:
+            if self.rb_create.isChecked():  # Создание записи
+                if self.prefix_entry.text() in self.cities_revers or self.city_entry.text() in self.cities:
+                    text = 'Такой префикс или город уже существует.'
+                    QtWidgets.QMessageBox.information(None,
+                                                      "База данных",
+                                                      text)
+                else:
+                    _key = self.prefix_entry.text()
+                    _city = self.city_entry.text()
+                    _sw = self.root_sw_entry.text()
+                    _port = self.root_port_entry.text()
+                    _col = self.col_sw_entry.text()
+                    _unix = self.unix_entry.text()
+
+                    try:
+                        _dict = {'city': _city, 'root_sw': _sw, 'root_port': _port, 'col_sw': _col, 'unix': _unix}
+                        city_shelve = settings.city_shelve
+                        with shelve.open(city_shelve) as db:
+                            work_with_db.add_to_db(db, _key, _dict)
+                        self.cities_list.clear()
+                        self.cities.clear()
+                        self.cities.update(get_list_cities())
+                        self.cities_list.addItems(sorted(self.cities))
+
+                        # обновляем и в главном окне
+                        self.content_window.city.clear()
+                        self.content_window.city.update(get_list_cities())
+                        self.content_window.city_list.clear()
+                        self.content_window.city_list.addItems(sorted(self.cities))
+
+                    except Exception as e:
+                        text = f"Ошибка добавления. {e}"
+                    else:
+                        text = f'Запись {_key} добавлена.'
+
+                    QtWidgets.QMessageBox.information(None,
+                                                      "База данных",
+                                                      text)
+            elif self.rb_update.isChecked():  # Изменения в существующей записи
+                _key = self.prefix_entry.text()
+                _city = self.city_entry.text()
+                _sw = self.root_sw_entry.text()
+                _port = self.root_port_entry.text()
+                _col = self.col_sw_entry.text()
+                _unix = self.unix_entry.text()
+
+                _dict = {'city': _city, 'root_sw': _sw, 'root_port': _port, 'col_sw': _col, 'unix': _unix}
+                try:
+                    city_shelve = settings.city_shelve
+                    print(_dict)
+                    with shelve.open(city_shelve) as db:
+                        work_with_db.update_in_db(db, _key, _dict)
+                except Exception as e:
+                    text = f'Ошибка изменения записи. \n Префикс изменить нельзя, необходимо пересоздавать. {e}'
+                else:
+                    self.cities_list.clear()
+                    self.cities.clear()
+                    self.cities.update(get_list_cities())
+                    self.cities_list.addItems(sorted(self.cities))
+
+                    # обновляем и в главном окне
+                    self.content_window.city.clear()
+                    self.content_window.city.update(get_list_cities())
+                    self.content_window.city_list.clear()
+                    self.content_window.city_list.addItems(sorted(self.cities))
+
+                    text = f'Запись {_key} успешно изменена.'
+
+                QtWidgets.QMessageBox.information(None,
+                                                  "База данных",
+                                                  text)
+
+            elif self.rb_delete.isChecked():  # Удаление записи
+                text = ''
+                _key = self.prefix_entry.text()
+                try:
+                    res = QtWidgets.QMessageBox.question(None,
+                                                         "База данных.",
+                                                         "Вы действительно хотите удалить запись?",
+                                                         buttons=QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.No)
+                    if res == QtWidgets.QMessageBox.Ok:
+                        city_shelve = settings.city_shelve
+                        with shelve.open(city_shelve) as db:
+                            work_with_db.delete_from_db(db, _key)
+                            text = f'Запись {_key} успешно удалена.'
+                except Exception as e:
+                    text = f'Ошибка удаления записи. {e}'
+                else:
+                    self.cities_list.clear()
+                    self.cities.clear()
+                    self.cities.update(get_list_cities())
+                    self.cities_list.addItems(sorted(self.cities))
+
+                    # обновляем и в главном окне
+                    self.content_window.city.clear()
+                    self.content_window.city.update(get_list_cities())
+                    self.content_window.city_list.clear()
+                    self.content_window.city_list.addItems(sorted(self.cities))
+
+                if text:
+                    QtWidgets.QMessageBox.information(None,
+                                                  "База данных",
+                                                  text)
+
+        else:  # if all_field:
+            text = 'Необходимо заполнить все поля.'
+            QtWidgets.QMessageBox.information(None,
+                                              "База данных",
+                                              text)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -320,7 +435,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                                     text=text)
 
     def work_db(self):
-        self.win_db = WorkWithDB()
+        self.win_db = WorkWithDB(window=self.window)
         self.win_db.show()
 
     def crea_mv(self):
@@ -334,7 +449,7 @@ class ContentWindow(QtWidgets.QWidget):
     def __init__(self, parent=None, ico=None):
         super().__init__(parent=parent)
         self.setWindowTitle("Работа с клиентами.")
-        self.resize(400, 300)  # x, y
+        self.resize(410, 310)  # x, y
         if ico:
             self.setWindowIcon(ico)
         self.all_fields_full = 0
