@@ -5,9 +5,9 @@ import shelve
 from Cryptodome.Cipher import Blowfish
 
 from work import settings
-from work.tools import work_with_db
+from work.tools import work_with_db, customers
 from work.cisco import create_cl_cisco
-from work.switches import switch
+from work.switches import switch, create_vlan
 from work.intranet import full_path_to_sw, tools, all_neighbor
 
 
@@ -91,6 +91,12 @@ class WorkWithDB(QtWidgets.QWidget):
         # END GROUP BOX
 
         self.but_run = QtWidgets.QPushButton(" Выполнить ")
+        # self.but_run.setStyleSheet("""
+        #     QPushButton:hover { background-color: red }
+        #     QPushButton:!hover { background-color: white }
+        #
+        #     QPushButton:pressed { background-color: rgb(0, 255, 0); }
+        # """)
         self.but_run.clicked.connect(self.run_data)
         self.but_quit = QtWidgets.QPushButton("Закрыть")
         self.but_quit.clicked.connect(self.close)
@@ -247,6 +253,7 @@ class WorkWithDB(QtWidgets.QWidget):
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+        self.resize(410, 300)  # x, y
         self.setWindowTitle("Работа с клиентами.")
         self.window = ContentWindow(self)
         self.action = True
@@ -452,7 +459,7 @@ class ContentWindow(QtWidgets.QWidget):
     def __init__(self, parent=None, ico=None):
         super().__init__(parent=parent)
         self.setWindowTitle("Работа с клиентами.")
-        self.resize(400, 400)  # x, y
+
         if ico:
             self.setWindowIcon(ico)
         self.all_fields_full = 0
@@ -721,15 +728,59 @@ class ContentWindow(QtWidgets.QWidget):
 
     # Запуск действия
     def run_b(self):
-        print(self.city_list.currentText())
-        print(self.edit_mnem.text())
-        print(self.edit_vlan.text())
-        print(self.edit_ipsw.text())
-        print(self.edit_port.text())
-        print(self.check_tag.isChecked())
+        _city = self.city_list.currentText()
+        _cisco = create_cl_cisco.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
+        state_pref = self.city[_city]
+        mnemo = self.edit_mnem.text()
+        vl_number = self.edit_vlan.text()
+        switch = self.edit_ipsw.text()
+        port = self.edit_port.text()
+        taguntag = 'U' if self.check_tag.isChecked() else 'T'
+        root_sw_other = None
+
+        if 'root' in switch:  # если надо сделать другой свитч корневым
+            switch, root_sw_other = switch.split('root')
+
+        _all_data_list = [
+            state_pref,
+            mnemo,
+            vl_number,
+            switch,
+            port,
+            taguntag,
+        ]
+        print(f'Creating instance client {self.mnemo}... ')
+        _client = customers.Customer(*_all_data_list, root_sw_other)
+
+        print(_city)
+        print(mnemo)
+        print(vl_number)
+        print(switch)
+        print(port)
+
+        print(taguntag)
         print(self.rb_create.isChecked())
         print(self.rb_delete.isChecked())
         print(self.rb_speed.isChecked())
+
+        if self.rb_create.isChecked():
+            res = create_vlan.create_vlan(_client, 'y')
+
+            if len(res[1]) > 0 and res[0] is True:
+                res[1] = f'\n{res[1]}'
+
+            if self.check_cisco:
+                result_create = _cisco.create_on_cisco(_client)
+                if len(result_create) > 1 and not result_create[0]:
+                    res[0] = False
+                    res[1] = f'{res[1]}\n\nERROR CREATE ON CISCO!!!\n{result_create[1]}'
+
+            return res
+
+        elif self.rb_delete.isChecked():
+            pass
+        elif self.rb_speed.isChecked():
+            pass
 
 
 if __name__ == "__main__":
