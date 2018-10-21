@@ -728,59 +728,68 @@ class ContentWindow(QtWidgets.QWidget):
 
     # Запуск действия
     def run_b(self):
-        _city = self.city_list.currentText()
-        _cisco = create_cl_cisco.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
-        state_pref = self.city[_city]
-        mnemo = self.edit_mnem.text()
-        vl_number = self.edit_vlan.text()
-        switch = self.edit_ipsw.text()
-        port = self.edit_port.text()
-        taguntag = 'U' if self.check_tag.isChecked() else 'T'
-        root_sw_other = None
+        if self.key_pass:
+            _city = self.city_list.currentText()
+            try:
+                _cisco = create_cl_cisco.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
+            except Exception as e:
+                print(f"Ошибка создания объекта cisco.\n main.py:ContentWindow:run_b\n{e}")
+            else:
+                print(_cisco)
+            state_pref = self.city[_city]
+            mnemo = self.edit_mnem.text()
+            vl_number = self.edit_vlan.text()
+            switch = self.edit_ipsw.text()
+            port = self.edit_port.text()
+            taguntag = 'U' if self.check_tag.isChecked() else 'T'
+            root_sw_other = None
 
-        if 'root' in switch:  # если надо сделать другой свитч корневым
-            switch, root_sw_other = switch.split('root')
+            if 'root' in switch:  # если надо сделать другой свитч корневым
+                switch, root_sw_other = switch.split('root')
 
-        _all_data_list = [
-            state_pref,
-            mnemo,
-            vl_number,
-            switch,
-            port,
-            taguntag,
-        ]
-        print(f'Creating instance client {self.mnemo}... ')
-        _client = customers.Customer(*_all_data_list, root_sw_other)
+            _all_data_list = [
+                state_pref,
+                mnemo,
+                vl_number,
+                switch,
+                port,
+                taguntag,
+            ]
+            print(f'Creating instance client {self.mnemo}... ')
+            _client = customers.Customer(*_all_data_list, root_sw_other)
 
-        print(_city)
-        print(mnemo)
-        print(vl_number)
-        print(switch)
-        print(port)
+            print(_client)
+            print(root_sw_other)
 
-        print(taguntag)
-        print(self.rb_create.isChecked())
-        print(self.rb_delete.isChecked())
-        print(self.rb_speed.isChecked())
+            print(self.rb_create.isChecked())
+            print(self.rb_delete.isChecked())
+            print(self.rb_speed.isChecked())
 
-        if self.rb_create.isChecked():
-            res = create_vlan.create_vlan(_client, 'y')
+            if self.rb_create.isChecked():
+                print("Создаём клиента на свитчах")
+                # res = create_vlan.create_vlan(_client, 'y')
+                #
+                # if len(res[1]) > 0 and res[0] is True:
+                #     res[1] = f'\n{res[1]}'
 
-            if len(res[1]) > 0 and res[0] is True:
-                res[1] = f'\n{res[1]}'
+                if self.check_cisco:
+                    print("Создаём клиента на cisco")
+                #     result_create = _cisco.create_on_cisco(_client)
+                #     if len(result_create) > 1 and not result_create[0]:
+                #         res[0] = False
+                #         res[1] = f'{res[1]}\n\nERROR CREATE ON CISCO!!!\n{result_create[1]}'
+                #
+                # return res
 
-            if self.check_cisco:
-                result_create = _cisco.create_on_cisco(_client)
-                if len(result_create) > 1 and not result_create[0]:
-                    res[0] = False
-                    res[1] = f'{res[1]}\n\nERROR CREATE ON CISCO!!!\n{result_create[1]}'
-
-            return res
-
-        elif self.rb_delete.isChecked():
-            pass
-        elif self.rb_speed.isChecked():
-            pass
+            elif self.rb_delete.isChecked():
+                pass
+            elif self.rb_speed.isChecked():
+                pass
+        else:   # if self.key_pass:
+            text = 'Невозможно выполнять действие без верного ключа.'
+            QtWidgets.QMessageBox.information(None,
+                                              "Выполнение",
+                                              text)
 
 
 if __name__ == "__main__":
