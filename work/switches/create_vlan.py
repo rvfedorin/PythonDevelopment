@@ -14,7 +14,7 @@ from work.tools import save_log
 filename = "./nodepath"
 
 
-def send_command_to_sw(sw_param, clients: list, messages_queue, login=None, passw=None):
+def send_command_to_sw(sw_param, clients: list, messages_queue, login='admin', passw=None):
     sw_port_edit = sw_param.split("-")
     n_port = len(sw_port_edit)
 
@@ -33,16 +33,17 @@ def send_command_to_sw(sw_param, clients: list, messages_queue, login=None, pass
 
         crea_vl = f"create vlan {client.vlan_name} tag {client.vlan_number}\r"
 
-        message += sw_obj.send_command([crea_vl, conf_vl])
+        message += f'{sw_obj.send_command([crea_vl, conf_vl])}'
 
-        if sw_port_edit[1] == client.switch:
+        if sw_obj.ip == client.switch:
             if client.tag == "U" or client.tag == "u":
                 del_from_def = f"conf vlan default del {client.sw_port} \r"
                 add_untagged = f"conf vlan {client.vlan_name} add untagged {client.sw_port}\r"
-                message += sw_obj.send_command([del_from_def, add_untagged])
+                message += f'{sw_obj.send_command([del_from_def, add_untagged])}'
             elif client.tag == "T" or client.tag == "t":
                 add_tagged = f"conf vlan {client.vlan_name} add tagged {client.sw_port}\r"
-                message += sw_obj.send_command([add_tagged, 'save\n'])
+                _save = 'save\n'
+                message += f'{sw_obj.send_command([add_tagged, _save])}'
 
     if 'DGS-1210' in message:
         pattern = '(Saving all configurations.*Saving all configurations)'

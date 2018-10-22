@@ -14,7 +14,10 @@ from re import search
 
 class NewSwitch:
     def __init__(self, ip, sw_login='admin', sw_passw='pass'):
+        print(ip, sw_login, sw_passw)
         self.ip = ip
+        if sw_login is None:
+            sw_login = 'admin'
         self.login = sw_login.encode()
         self.passw = sw_passw.encode()
 
@@ -164,5 +167,5 @@ class NewSwitch:
 
 if __name__ == '__main__':
     passw = input("pass: ")
-    sw = NewSwitch('172.16.48.254', 'admin', passw)
+    sw = NewSwitch('172.16.48.254', b'admin', passw)
     print(sw.send_command(['show ports\nq\n', 'show vlan po 2\nq\n', 'show ports 2\n']))

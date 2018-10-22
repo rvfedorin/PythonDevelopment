@@ -6,8 +6,8 @@ from Cryptodome.Cipher import Blowfish
 
 from work import settings
 from work.tools import work_with_db, customers
-from work.cisco import create_cl_cisco
-from work.switches import switch, create_vlan
+from work.cisco import create_cl_cisco, cisco_class
+from work.switches import switch, create_vlan, del_vlan
 from work.intranet import full_path_to_sw, tools, all_neighbor
 
 
@@ -487,7 +487,11 @@ class ContentWindow(QtWidgets.QWidget):
         self.edit_vlan.setValidator(QtGui.QIntValidator())
 
         self.edit_ipsw = QtWidgets.QLineEdit()
+        #  валидатор IProotIP
         str_ip = '^((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])' \
+                 '(\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])){3})' \
+                 'root' \
+                 '((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])' \
                  '(\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])){3})$;'
         self.regexp_ip = QtCore.QRegExp(str_ip)
         self.edit_ipsw.setValidator(QtGui.QRegExpValidator(self.regexp_ip))
@@ -729,6 +733,7 @@ class ContentWindow(QtWidgets.QWidget):
     # Запуск действия
     def run_b(self):
         if self.key_pass:
+            text = ''
             _city = self.city_list.currentText()
             try:
                 _cisco = create_cl_cisco.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
@@ -755,36 +760,37 @@ class ContentWindow(QtWidgets.QWidget):
                 port,
                 taguntag,
             ]
-            print(f'Creating instance client {self.mnemo}... ')
+
+            print(f'Creating instance client {mnemo}... ')
             _client = customers.Customer(*_all_data_list, root_sw_other)
-
-            print(_client)
-            print(root_sw_other)
-
-            print(self.rb_create.isChecked())
-            print(self.rb_delete.isChecked())
-            print(self.rb_speed.isChecked())
 
             if self.rb_create.isChecked():
                 print("Создаём клиента на свитчах")
-                # res = create_vlan.create_vlan(_client, 'y')
-                #
-                # if len(res[1]) > 0 and res[0] is True:
-                #     res[1] = f'\n{res[1]}'
+                res = create_vlan.create_vlan(_client, 'y', 'admin', self.p_sw)  # return [True, _message]
+
+                if len(res[1]) > 0 and res[0] is True:
+                    text += f'\n{res[1]}'
 
                 if self.check_cisco:
                     print("Создаём клиента на cisco")
-                #     result_create = _cisco.create_on_cisco(_client)
-                #     if len(result_create) > 1 and not result_create[0]:
-                #         res[0] = False
-                #         res[1] = f'{res[1]}\n\nERROR CREATE ON CISCO!!!\n{result_create[1]}'
-                #
-                # return res
+                    result_create = _cisco.create_on_cisco(_client)
+                    if len(result_create) > 1 and not result_create[0]:
+                        res[0] = False
+                        text += f'{res[1]}\n\nERROR CREATE ON CISCO!!!\n{result_create[1]}'
 
             elif self.rb_delete.isChecked():
-                pass
+                res = del_vlan.del_code(_client, 'y', 'admin', self.p_sw)  # return list
+                if self.del_ciso is True:
+                    _cisco = cisco_class.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, _client.state)
+                    _cisco.delete_from_cisco(_client.state, [_client])
+                return res
+
             elif self.rb_speed.isChecked():
-                pass
+                print("Смена скорости.")
+
+            QtWidgets.QMessageBox.information(None,
+                                              "Выполнение",
+                                              text)
         else:   # if self.key_pass:
             text = 'Невозможно выполнять действие без верного ключа.'
             QtWidgets.QMessageBox.information(None,

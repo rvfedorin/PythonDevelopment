@@ -13,7 +13,7 @@ def op_define(mnemokod):
 
 
 # string_sw is the full path to the desired switch from the file nodepath
-def del_code(clients, correct_cl='y', que=None, login=None, passw=None):
+def del_code(clients, correct_cl='y', que=None, login='admin', passw=None):
 
     if isinstance(clients, tuple):
         que = clients[1]
