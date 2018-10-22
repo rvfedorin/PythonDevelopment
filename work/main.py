@@ -738,7 +738,7 @@ class ContentWindow(QtWidgets.QWidget):
             text = ''
             _cisco_created = False
             _city = self.city_list.currentText()
-            if self.check_cisco.isChecked():  # Если выбрано создание клиента на cisco
+            if self.check_cisco.isChecked() or self.rb_speed.isChecked():  # Если выбрано создание клиента на cisco
                 try:
                     _cisco = cisco_class.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
                 except Exception as e:
@@ -784,7 +784,7 @@ class ContentWindow(QtWidgets.QWidget):
                 elif res[0]:
                     text += 'Клиент на свитчах создан.\n'
 
-                if _cisco_created:
+                if _cisco_created:  # ###################### СОЗДАНИЕ
                     print("Идёт создание клиента на cisco")
                     self.parent.statusBar().showMessage("Идёт создание клиента на cisco")
                     result_create = _cisco.create_on_cisco(_client)
@@ -794,7 +794,7 @@ class ContentWindow(QtWidgets.QWidget):
                     else:
                         text += "\nКлиент на cisco создан.\n"
 
-            elif self.rb_delete.isChecked():
+            elif self.rb_delete.isChecked():  # ###################### УДАЛЕНИЕ
                 self.parent.statusBar().showMessage("Идёт удаление клиента на свитчах")
                 res = del_vlan.del_code(clients=_client, correct_cl='y', passw=self.p_sw)  # return list
 
@@ -808,8 +808,21 @@ class ContentWindow(QtWidgets.QWidget):
                     _cisco.delete_from_cisco([_client])
                     text += "\nКлиент на cisco удалён.\n"
 
-            elif self.rb_speed.isChecked():
+            elif self.rb_speed.isChecked():   # ###################### СКОРОСТЬ
                 print("Смена скорости.")
+                _changed = ''
+                _not_changed = ''
+                res = _cisco.change_speed()  # return [True, clients_not_done, clients_not_found]
+                print(222)
+                if len(res[1]) > 0:
+                    for cust_speed in res[1]:
+                        _changed += f'\nSuccess: {cust_speed}'
+
+                if len(res[2]) > 0:
+                    for cust_speed in res[2]:
+                        _not_changed += f'\n Not changed: {cust_speed}\n'
+
+                text = f'\n{_changed} \n {_not_changed}\n'
 
             self.parent.statusBar().showMessage("Ready")
             _title = f"Результат выполнения: " + '_' * 80
