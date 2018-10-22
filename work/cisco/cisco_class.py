@@ -20,7 +20,8 @@ class CiscoCreate:
         print(f"Создан интерфейс Cisco для ОП {self.city_pref}")
 
     # ФУНКЦИИ УДАЛЕНИЯ
-    def get_data_state(self, state):
+    def get_data_state(self):
+        state = self.city_pref
         cisco_city = unix_city = None
         city_shelve = settings.city_shelve
         with shelve.open(city_shelve) as db:
@@ -32,11 +33,11 @@ class CiscoCreate:
                 unix_city = city_db['unix']
         return cisco_city, unix_city
 
-    def download_clients_conf_sftp(self, state):
+    def download_clients_conf_sftp(self):
         local_clients_conf = settings.local_clients_conf
         remote_path = settings.clients_conf_path
         port = 22
-        cisco_city, unix_city = self.get_data_state(state)
+        cisco_city, unix_city = self.get_data_state()
         transport = paramiko.Transport(unix_city, port)
         transport.connect(username='support', password=self.p_un_sup)
         sftp = paramiko.SFTPClient.from_transport(transport)
@@ -47,7 +48,8 @@ class CiscoCreate:
         sftp.close()
         transport.close()
 
-    def delete_if_lan(self, tn, ip_client, interface_cl):
+    @staticmethod
+    def delete_if_lan(tn, ip_client, interface_cl):
         octets = ip_client[3].split('.')
         octet4, lan = octets[3].split('/')[0], octets[3].split('/')[1]
         convert_lan = 256 - (2 ** (32 - int(lan)))
@@ -66,7 +68,8 @@ class CiscoCreate:
         tn.write(b"end \r")
         print((tn.read_until(b"#", timeout=2)).decode())
 
-    def delete_if_ip(self, tn, _ip_client, interface_cl):
+    @staticmethod
+    def delete_if_ip(tn, _ip_client, interface_cl):
         if '/' in _ip_client[3]:
             _ip_client[3] = _ip_client[3].split('/')[0]
         tn.write(b"conf t \r")
@@ -82,14 +85,14 @@ class CiscoCreate:
         tn.write(b"end \r")
         print((tn.read_until(b"#", timeout=2)).decode())
 
-    def delete_from_cisco(self, state, client_list):
+    def delete_from_cisco(self, client_list):
         ip_client = None
         log_string = []
         clients_not_found = []
         if_many_ip = []
         local_clients_conf = settings.local_clients_conf
-        self.download_clients_conf_sftp(state)
-        cisco_city, unix_city = self.get_data_state(state)
+        self.download_clients_conf_sftp()
+        cisco_city, unix_city = self.get_data_state()
 
         with open(local_clients_conf) as fc:
             clients_conf = fc.read().splitlines()
@@ -189,12 +192,11 @@ class CiscoCreate:
                 print('=' * 94)
                 print('=' * 94)
 
-            save_log.create_log(log_string, state, 'delete_vlan_cisco')
+            save_log.create_log(log_string, self.city_pref, 'delete_vlan_cisco')
         return log_string
 
     # ФУНКЦИИ  СОЗДАНИЯ
     def login_on_cisco(self, cisco):
-
         try:
             tn = telnetlib.Telnet(cisco)
             print("Telnet to " + cisco)
@@ -207,34 +209,6 @@ class CiscoCreate:
         except timeout:
             return False
         return tn
-
-    def get_data_state(self):
-        state = self.city_pref
-        cisco_city = unix_city = None
-        print("Получение данных из базы.")
-        with shelve.open(self.city_shelve) as db:
-            if state in db:
-                city_db = db[state]
-                temp_cisco = city_db['unix'].split('.')
-                temp_cisco[3] = str(int(temp_cisco[3]) - 1)
-                cisco_city = '.'.join(temp_cisco)
-                unix_city = city_db['unix']
-        return cisco_city, unix_city
-
-    def download_clients_conf_sftp(self):
-        local_clients_conf = settings.local_clients_conf
-        remote_path = settings.clients_conf_path
-        port = 22
-        cisco_city, unix_city = self.get_data_state()
-        transport = paramiko.Transport(unix_city, port)
-        transport.connect(username='support', password=self.p_un_sup)
-        sftp = paramiko.SFTPClient.from_transport(transport)
-
-        sftp.get(remote_path, local_clients_conf)
-        # sftp.put(local_path, remote_path)
-
-        sftp.close()
-        transport.close()
 
     @staticmethod
     def get_unnumbered_loopback(tn, interface):
@@ -404,7 +378,7 @@ class CiscoCreate:
             print('=' * 94)
             print('=' * 94)
 
-        save_log.create_log(log_string, state, 'create_vlan_cisco')
+        save_log.create_log(log_string, self.city_pref, 'create_vlan_cisco')
         if result_create[0]:
             return log_string
         else:
@@ -431,6 +405,7 @@ class CiscoCreate:
             current_speed = b.group(0).split()
             return current_speed[2], _type
 
+    @staticmethod
     def change_speed_type_service(tn, current_speed, new_speed, ip_client, interface_cl):
         print("=" * 100)
         print("=" * 100)
@@ -450,6 +425,7 @@ class CiscoCreate:
         tn.write(b"end \r")
         print((tn.read_until(b"#", timeout=2)).decode())
 
+    @staticmethod
     def change_speed_type_rate(tn, current_speed, new_speed, ip_client, interface_cl):
         new_rate = int(new_speed.split('k')[0]) / 1024
         cur_rate = int(current_speed) / 1024000
@@ -474,16 +450,16 @@ class CiscoCreate:
         tn.write(b"end \r")
         print((tn.read_until(b"#", timeout=2)).decode())
 
-    def change_speed(self, state):
+    def change_speed(self):
         ip_client = None
         filename = f"{settings.data_path}cl_to_change_speed.txt"
         local_clients_conf = settings.local_clients_conf
         log_string = []
         clients_not_found = []
         clients_not_done = []
-        cisco_city, unix_city = self.get_data_state(state)
+        cisco_city, unix_city = self.get_data_state()
 
-        self.download_clients_conf_sftp(state)
+        self.download_clients_conf_sftp()
 
         with open(filename) as f:
             clients_list_to_change = f.read().splitlines()
@@ -594,7 +570,7 @@ class CiscoCreate:
         # print(str_date)
 
         tn.close()
-        save_log.create_log(log_string, state, 'change_speed')
+        save_log.create_log(log_string, self.city_pref, 'change_speed')
         return [True, clients_not_done, clients_not_found]
 
 
@@ -604,7 +580,7 @@ if __name__ == '__main__':
 
     cl_data = [state, 'Orel-Invento', 1228, '172.16.43.86', 15, 'T']
     client = Customer(*cl_data)
-    _cis = CiscoCreate()
+    # _cis = CiscoCreate()
 
-    for i in _cis.delete_from_cisco(state, [client]):
-        print(i)
+    # for i in _cis.delete_from_cisco([client]):
+    #     print(i)
