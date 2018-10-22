@@ -14,7 +14,6 @@ from re import search
 
 class NewSwitch:
     def __init__(self, ip, sw_login='admin', sw_passw='pass'):
-        print(ip, sw_login, sw_passw)
         self.ip = ip
         if sw_login is None:
             sw_login = 'admin'

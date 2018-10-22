@@ -33,17 +33,17 @@ def send_command_to_sw(sw_param, clients: list, messages_queue, login='admin', p
 
         crea_vl = f"create vlan {client.vlan_name} tag {client.vlan_number}\r"
 
-        message += f'{sw_obj.send_command([crea_vl, conf_vl])}'
+        message += '\n'.join(sw_obj.send_command([crea_vl, conf_vl]))
 
         if sw_obj.ip == client.switch:
             if client.tag == "U" or client.tag == "u":
                 del_from_def = f"conf vlan default del {client.sw_port} \r"
                 add_untagged = f"conf vlan {client.vlan_name} add untagged {client.sw_port}\r"
-                message += f'{sw_obj.send_command([del_from_def, add_untagged])}'
+                message += '\n'.join(sw_obj.send_command([del_from_def, add_untagged]))
             elif client.tag == "T" or client.tag == "t":
                 add_tagged = f"conf vlan {client.vlan_name} add tagged {client.sw_port}\r"
                 _save = 'save\n'
-                message += f'{sw_obj.send_command([add_tagged, _save])}'
+                message += '\n'.join(sw_obj.send_command([add_tagged, _save]))
 
     if 'DGS-1210' in message:
         pattern = '(Saving all configurations.*Saving all configurations)'
@@ -115,7 +115,10 @@ def create_vlan(clients, chek=None, login=None, passw=None):
             _thread.join()
 
         all_log_list, exist = format_order_message(messages_queue, client.all_path)
-        save_log.create_log(all_log_list, client.state, 'create_vlan')
+        try:
+            save_log.create_log(all_log_list, client.state, 'create_vlan')
+        except Exception as e:
+            print(f"Не удалось сохранить лог: {e}")
 
         _message = ''
         for i in exist:

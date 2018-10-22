@@ -6,7 +6,7 @@ from Cryptodome.Cipher import Blowfish
 
 from work import settings
 from work.tools import work_with_db, customers
-from work.cisco import create_cl_cisco, cisco_class
+from work.cisco import cisco_class
 from work.switches import switch, create_vlan, del_vlan
 from work.intranet import full_path_to_sw, tools, all_neighbor
 
@@ -459,6 +459,8 @@ class ContentWindow(QtWidgets.QWidget):
     def __init__(self, parent=None, ico=None):
         super().__init__(parent=parent)
         self.setWindowTitle("Работа с клиентами.")
+        self.parent = parent
+        # parent.statusBar().showMessage("Ready qweqwe")
 
         if ico:
             self.setWindowIcon(ico)
@@ -698,10 +700,9 @@ class ContentWindow(QtWidgets.QWidget):
         if self.key_pass:
             print("Свободный влан")
             _city = self.city_list.currentText()
-            print(_city)
-            # print(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
+
             try:
-                _cisco = create_cl_cisco.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
+                _cisco = cisco_class.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
             except Exception as e:
                 print(f"Ошибка создания интерфейса Cisco {e}")
             else:
@@ -734,13 +735,20 @@ class ContentWindow(QtWidgets.QWidget):
     def run_b(self):
         if self.key_pass:
             text = ''
+            _cisco_created = False
             _city = self.city_list.currentText()
-            try:
-                _cisco = create_cl_cisco.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
-            except Exception as e:
-                print(f"Ошибка создания объекта cisco.\n main.py:ContentWindow:run_b\n{e}")
-            else:
-                print(_cisco)
+            if self.check_cisco.isChecked():  # Если выбрано создание клиента на cisco
+                try:
+                    _cisco = cisco_class.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
+                except Exception as e:
+                    text = f"Ошибка создания объекта cisco.\n main.py:ContentWindow:run_b\n{e}"
+                    print(text)
+                    QtWidgets.QMessageBox.information(None,
+                                                      "Выполнение",
+                                                      text)
+                else:
+                    _cisco_created = True
+
             state_pref = self.city[_city]
             mnemo = self.edit_mnem.text()
             vl_number = self.edit_vlan.text()
@@ -764,33 +772,48 @@ class ContentWindow(QtWidgets.QWidget):
             print(f'Creating instance client {mnemo}... ')
             _client = customers.Customer(*_all_data_list, root_sw_other)
 
-            if self.rb_create.isChecked():
-                print("Создаём клиента на свитчах")
+            # Блок выбора действия
+            if self.rb_create.isChecked():  #
+                print("Идёт создание клиента на свитчах")
+                self.parent.statusBar().showMessage("Создаём клиента на свитчах")
                 res = create_vlan.create_vlan(_client, 'y', 'admin', self.p_sw)  # return [True, _message]
 
                 if len(res[1]) > 0 and res[0] is True:
                     text += f'\n{res[1]}'
+                elif res[0]:
+                    text += 'Клиент на свитчах создан.\n'
 
-                if self.check_cisco:
-                    print("Создаём клиента на cisco")
+                if _cisco_created:
+                    print("Идёт создание клиента на cisco")
+                    self.parent.statusBar().showMessage("Создаём клиента на cisco")
                     result_create = _cisco.create_on_cisco(_client)
                     if len(result_create) > 1 and not result_create[0]:
                         res[0] = False
                         text += f'{res[1]}\n\nERROR CREATE ON CISCO!!!\n{result_create[1]}'
+                    else:
+                        text += "Клиент на cisco создан.\n"
 
             elif self.rb_delete.isChecked():
                 res = del_vlan.del_code(_client, 'y', 'admin', self.p_sw)  # return list
-                if self.del_ciso is True:
-                    _cisco = cisco_class.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, _client.state)
-                    _cisco.delete_from_cisco(_client.state, [_client])
-                return res
+                if len(res[1]) > 0 and res[0] is True:
+                    text += f'\n{res[1]}'
+                elif res[0]:
+                    text += 'Клиент на свитчах создан.\n'
+
+                if _cisco_created:  # если создан объект циски
+                    _cisco.delete_from_cisco([_client])
+                    text += "Клиент на cisco удалён.\n"
+
 
             elif self.rb_speed.isChecked():
                 print("Смена скорости.")
 
-            QtWidgets.QMessageBox.information(None,
-                                              "Выполнение",
-                                              text)
+            self.parent.statusBar().showMessage("Ready")
+            _title = f"Результат выполнения: " + '_' * 30
+            QtWidgets.QInputDialog.getMultiLineText(None,
+                                                    "Выполнение",
+                                                    _title,
+                                                    text=text)
         else:   # if self.key_pass:
             text = 'Невозможно выполнять действие без верного ключа.'
             QtWidgets.QMessageBox.information(None,
