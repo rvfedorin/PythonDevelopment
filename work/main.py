@@ -649,11 +649,11 @@ class ContentWindow(QtWidgets.QWidget):
                 self.edit_ipsw.setDisabled(False)
                 self.but_speed_edit.setVisible(False)
                 self.check_cisco.setVisible(True)
-                self.check_tag.setDisabled(False)
                 self.but_free_port.setDisabled(False)
             self.edit_port.setText('')
             self.check_cisco.setText("Создать на Cisco")
             self.edit_port.setDisabled(False)
+            self.check_tag.setDisabled(False)
 
         elif self.rb_delete.isChecked():
             if self.edit_mnem.text() == 'All in file':  # если переходим со вкладки смены скорости
@@ -671,6 +671,7 @@ class ContentWindow(QtWidgets.QWidget):
             self.check_cisco.setText("Удалить с Cisco")
             self.edit_port.setText('999')
             self.edit_port.setDisabled(True)
+            self.check_tag.setDisabled(True)
 
         elif self.rb_speed.isChecked():
             self.edit_mnem.setText('All in file')
@@ -775,41 +776,43 @@ class ContentWindow(QtWidgets.QWidget):
             # Блок выбора действия
             if self.rb_create.isChecked():  #
                 print("Идёт создание клиента на свитчах")
-                self.parent.statusBar().showMessage("Создаём клиента на свитчах")
+                self.parent.statusBar().showMessage("Идёт создание клиента на свитчах")
                 res = create_vlan.create_vlan(_client, 'y', 'admin', self.p_sw)  # return [True, _message]
 
-                if len(res[1]) > 0 and res[0] is True:
+                if len(res[1]) > 0 and res[0]:
                     text += f'\n{res[1]}'
                 elif res[0]:
                     text += 'Клиент на свитчах создан.\n'
 
                 if _cisco_created:
                     print("Идёт создание клиента на cisco")
-                    self.parent.statusBar().showMessage("Создаём клиента на cisco")
+                    self.parent.statusBar().showMessage("Идёт создание клиента на cisco")
                     result_create = _cisco.create_on_cisco(_client)
                     if len(result_create) > 1 and not result_create[0]:
                         res[0] = False
                         text += f'{res[1]}\n\nERROR CREATE ON CISCO!!!\n{result_create[1]}'
                     else:
-                        text += "Клиент на cisco создан.\n"
+                        text += "\nКлиент на cisco создан.\n"
 
             elif self.rb_delete.isChecked():
-                res = del_vlan.del_code(_client, 'y', 'admin', self.p_sw)  # return list
-                if len(res[1]) > 0 and res[0] is True:
+                self.parent.statusBar().showMessage("Идёт удаление клиента на свитчах")
+                res = del_vlan.del_code(clients=_client, correct_cl='y', passw=self.p_sw)  # return list
+
+                if len(res[1]) > 0 and res[0]:
                     text += f'\n{res[1]}'
-                elif res[0]:
-                    text += 'Клиент на свитчах создан.\n'
+                elif len(res[1]) > 0:
+                    text += f'Возникли ошибки при удалении на свитчах.\n {res[1]}'
 
                 if _cisco_created:  # если создан объект циски
+                    self.parent.statusBar().showMessage("Идёт удаление клиента на cisco")
                     _cisco.delete_from_cisco([_client])
-                    text += "Клиент на cisco удалён.\n"
-
+                    text += "\nКлиент на cisco удалён.\n"
 
             elif self.rb_speed.isChecked():
                 print("Смена скорости.")
 
             self.parent.statusBar().showMessage("Ready")
-            _title = f"Результат выполнения: " + '_' * 30
+            _title = f"Результат выполнения: " + '_' * 80
             QtWidgets.QInputDialog.getMultiLineText(None,
                                                     "Выполнение",
                                                     _title,

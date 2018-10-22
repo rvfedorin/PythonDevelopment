@@ -26,7 +26,7 @@ class NewSwitch:
 
     #  в основном для защиты от подключения к 2108
     def get_model_sw(self, url):
-        ## for 2108
+        # for 2108
         ua = fake_useragent.UserAgent()
         user = ua.random
         header = {'User-Agent': str(user)}
@@ -54,8 +54,8 @@ class NewSwitch:
             print(f'Try connect to sw {self.ip}')
             tn = Telnet(self.ip, 23, 5)
             tn.set_option_negotiation_callback(self._bulk)
-        except timeout:
-            message = f"Timeout telnet to {self.ip} \n ERROR \n"
+        except Exception as e:
+            message = f"Error telnet to {self.ip} \n ERROR \n {e}"
             return [False, message]
 
         tn.read_until(b":", timeout=1)
@@ -66,6 +66,7 @@ class NewSwitch:
         tn.write(b"\n\n")
         tn.read_until(b'#')
 
+        print(f"Подключеник к {self.ip} установлено.")
         return [True, tn]
 
     # из сообщения от свитча выясняем есть ли влан на порту
@@ -150,14 +151,17 @@ class NewSwitch:
         try:
             for com in command_list:
                 text = ''
-                # print(f"    |_send command to {self.ip}")
                 text += tn.read_until(b'#', timeout=1).decode()
                 tn.write(com.encode())
                 text += tn.read_until(b'#', timeout=1).decode()
                 res.append(text)
             tn.write(b"logout\n")
+
+        except Exception as e:
+            print(f"Ошибка отправки комманды на свитч {self.ip}. \n {e}")
         finally:
             tn.close()
+
         if _dict_done:
             _dict_done[self.ip] = res
         else:

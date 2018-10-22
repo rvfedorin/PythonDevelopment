@@ -1,0 +1,5 @@
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+=============== Orel-test TAG 1398 === SUCCESS removed from 172.16.48.254 ======= by VLAN NUMBER ===== 
+=============== Orel-test TAG 1398 === SUCCESS removed from 172.16.44.237 ======= by VLAN NUMBER ===== 
+=============== Orel-test TAG 1398 === SUCCESS removed from 172.16.42.246 ======= by VLAN NUMBER ===== 
+=============== Orel-test TAG 1398 === SUCCESS removed from 172.17.152.122 ======= by VLAN NUMBER ===== 

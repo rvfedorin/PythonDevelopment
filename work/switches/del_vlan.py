@@ -25,7 +25,7 @@ def del_code(clients, correct_cl='y', que=None, login='admin', passw=None):
         client = clients
         clients = [clients]
 
-    """ Function removes vlan by nave or number from switches """
+    """ Function removes vlan by name or number from switches """
     falses = False
     log_string = []
     fails_msg = ''
@@ -54,39 +54,43 @@ def del_code(clients, correct_cl='y', que=None, login='admin', passw=None):
         list_sw = string_sw.split("--")
 
         for sw_port in list_sw:
+            print(sw_port)
             sw_port_edit = sw_port.split("-")
             print("\ntelnet to " + sw_port_edit[1] + " ....")
-            sw_obj = switch.NewSwitch(sw_port_edit[1], login, passw)
+            try:
+                sw_obj = switch.NewSwitch(sw_port_edit[1], login, passw)
+            except Exception as e:
+                print(f"Не удалось создать объект свитча. {e}")
+            else:
+                # #################### START DELETE CLIENTS IN LIST ########################
+                for client in clients:
+                    answer_code_line = ''
+                    save = "save\r"
+                    code_line = "delete vlan vl {} \r".format(client.vlan_number)
+                    code2_line = "delete vlan {} \r".format(client.vlan_name)
 
-            # #################### START DELETE CLIENTS IN LIST ########################
-            for client in clients:
-                answer_code_line = ''
-                code_line = "delete vlan vl {} \r".format(client.vlan_number)
-                code2_line = "delete vlan {} \r".format(client.vlan_name)
+                    answer_code_line += '\n'.join(sw_obj.send_command([code_line, save]))
 
-                answer_code_line += sw_obj.send_command([code_line])
-                print(answer_code_line)
-                if answer_code_line.find("Success") >= 0:
+                    if answer_code_line.find("Success") >= 0:
 
-                    print_string = f"=============== {client.vlan_name} TAG {client.vlan_number} === " \
-                                   f"SUCCESS removed from {sw_port_edit[1]} ======= by VLAN NUMBER ===== \n"
-                    print(print_string)
-                else:
-                    answer_code2_line = sw_obj.send_command([code2_line])
-                    if answer_code2_line.find("Success") >= 0:
-                        print_string = f"=============== {client.vlan_name} TAG {client.vlan_number} " \
-                                       f"=== SUCCESS removed from {sw_port_edit[1]} ===== by NAME ======= \n"
+                        print_string = f"=============== {client.vlan_name} TAG {client.vlan_number} === " \
+                                       f"SUCCESS removed from {sw_port_edit[1]} ======= by VLAN NUMBER ===== \n"
                         print(print_string)
                     else:
-                        print()
-                        print_string = f"========== {client.vlan_name} TAG {client.vlan_number} " \
-                                       f"=--= FAIL. NOT removed from {sw_port_edit[1]}.============ \n"
-                        print(print_string)
-                        falses = True
+                        answer_code2_line = '\n'.join(sw_obj.send_command([code2_line, save]))
+                        if answer_code2_line.find("Success") >= 0:
+                            print_string = f"=============== {client.vlan_name} TAG {client.vlan_number} " \
+                                           f"=== SUCCESS removed from {sw_port_edit[1]} ===== by NAME ======= \n"
+                            print(print_string)
+                        else:
+                            print()
+                            print_string = f"========== {client.vlan_name} TAG {client.vlan_number} " \
+                                           f"=--= FAIL. NOT removed from {sw_port_edit[1]}.============ \n"
+                            print(print_string)
+                            falses = True
 
-                log_string.append(print_string)
-            # #################### END DELETE CLIENTS IN LIST ########################
-            sw_obj.send_command(["save\r"])
+                    log_string.append(print_string)
+                # #################### END DELETE CLIENTS IN LIST ########################
 
         save_log.create_log(log_string, city, 'delete_vlan')
 
@@ -102,11 +106,11 @@ def del_code(clients, correct_cl='y', que=None, login='admin', passw=None):
             if que:
                 que.put('Delete')
 
-            return [True]
+            return [True, "Клиент на свитчах удалён."]
 
     else:
         print('Data is incorrect! You need type y or n.')
-        return [False]
+        return [False, 'Data is incorrect! You need type y or n.']
 
 
 if __name__ == '__main__':
