@@ -3,6 +3,8 @@ import sys
 import os
 import shelve
 from Cryptodome.Cipher import Blowfish
+from functools import partial
+from multiprocessing import Pool, Manager
 
 from work import settings
 from work.tools import work_with_db, customers
@@ -35,7 +37,11 @@ class PathSwThread(QtCore.QThread):
 
     def run(self):
         try:
-            _path_to_sw = full_path_to_sw.full_path(self.ended_switch, self.column_ip, self.root_port, self.root_sw, self.city)
+            _path_to_sw = full_path_to_sw.full_path(self.ended_switch,
+                                                    self.column_ip,
+                                                    self.root_port,
+                                                    self.root_sw,
+                                                    self.city)
         except Exception as e:
             print(e)
         else:
@@ -45,7 +51,49 @@ class PathSwThread(QtCore.QThread):
                 except Exception as e:
                     print(e)
                 else:
-                    self.mysignal.emit(f"{self.ended_switch}XXX{_path_with_links[1]}")
+                    self.mysignal.emit(f"Путь до свитча {self.ended_switch}XXX{_path_with_links[1]}")
+
+
+class CreateMulVlanThread(QtCore.QThread):
+    mysignal = QtCore.pyqtSignal(str)
+
+    def __init__(self, clients, p_sw):
+        super(CreateMulVlanThread, self).__init__()
+        self.clients = clients[:]
+        self.p_sw = p_sw
+
+    def run(self):
+        try:
+            res = create_vlan.create_vlan(self.clients, 'y', 'admin', self.p_sw)
+        except Exception as e:
+            print(e)
+        else:
+            # XXX разделитель заголовка и тела сообщения
+            self.mysignal.emit(f"Создание вланов по списку XXXСделано.\n{res[1]}")
+
+
+class DelMulVlanThread(QtCore.QThread):
+    mysignal = QtCore.pyqtSignal(str)
+
+    def __init__(self, clients, p_sw, main_window):
+        super(DelMulVlanThread, self).__init__()
+        self.clients = clients[:]
+        self.p_sw = p_sw
+        self._manager = Manager()
+        self._queue = self._manager.Queue()
+
+    def run(self):
+        kwarg = {'que': self._queue, 'passw': self.p_sw}
+        try:
+            with Pool(8) as p:
+                p.map(partial(del_vlan.del_code, **kwarg), self.clients)
+
+            res = self._queue.get()
+        except Exception as e:
+            print(e)
+        else:
+            # XXX разделитель заголовка и тела сообщения
+            self.mysignal.emit(f"Удаление вланов по списку XXXСделано.\n{res}")
 
 
 class WorkWithDB(QtWidgets.QWidget):
@@ -267,19 +315,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # МЕНЮ
         menu_tools = main_menu.addMenu('Tools')
-        menu_tools.menuAction().setStatusTip("Work with DB; Create/Delete multivlan")
-        menu_tools_db = menu_tools.addAction("Work with DB")
+        menu_tools.menuAction().setStatusTip("Работа с БД; Массовое Создание/Удаление vlan")
+        menu_tools_db = menu_tools.addAction("Работа с БД")
         menu_tools_db.triggered.connect(self.work_db)
-        menu_tools_cml = menu_tools.addAction("Create multy vlan")
+        menu_tools_cml = menu_tools.addAction("Массовое создание vlan")
         menu_tools_cml.triggered.connect(self.crea_mv)
-        menu_tools_dml = menu_tools.addAction("Delete multy vlan")
+        menu_tools_dml = menu_tools.addAction("Массовое удаление vlan")
         menu_tools_dml.triggered.connect(self.dele_mv)
 
         menu_switch = main_menu.addMenu('Switch')
-        menu_switch.menuAction().setStatusTip("Path to switch; All connected from switch")
-        menu_switch_path = menu_switch.addAction("Path to switch")
+        menu_switch.menuAction().setStatusTip("Путь до свитча; Все подключения от свитча")
+        menu_switch_path = menu_switch.addAction("Путь до свитча")
         menu_switch_path.triggered.connect(self.path_sw_runner)
-        menu_switch_connected = menu_switch.addAction("All connected from switch")
+        menu_switch_connected = menu_switch.addAction("Все подключения от свитча")
         menu_switch_connected.triggered.connect(self.connected_sw)
 
         menu_help = main_menu.addMenu('Help')
@@ -365,17 +413,15 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.statusBar().showMessage("Ready")
 
-    def message_out(self, value, win_name=None):
+    def message_out(self, value):
         """ Поиск пути до свитча с линками """
         self.statusBar().showMessage("Ready")
         if value:
             text = value.split('XXX')
-            _title = f"Путь до свитча {text[0]} " + "_" * len(value)
+            _title = f"{text[0]} " + "_" * 80
             _body = text[1]
-            if win_name:
-                win_name = 'Путь до свитча'
-            else:
-                win_name = win_name
+            win_name = _title
+
             QtWidgets.QInputDialog.getMultiLineText(None,
                                                     win_name,
                                                     _title,
@@ -449,10 +495,126 @@ class MainWindow(QtWidgets.QMainWindow):
         self.win_db.show()
 
     def crea_mv(self):
-        pass
+        self.statusBar().showMessage("Идёт создание вланов ...")
+        # Окно запроса начало
+        _win = QtWidgets.QDialog()
+        _win.setWindowTitle("Создание вланов по списку клиентов из файла.")
+        _form = QtWidgets.QFormLayout()
+
+        _city_list = QtWidgets.QComboBox()
+        _city_list.addItems(sorted(self.window.city))
+        _city_list.setCurrentText(self.window.city_list.currentText())
+        _sw_ent = QtWidgets.QLineEdit()
+        _sw_ent.setValidator(QtGui.QRegExpValidator(self.window.regexp_ip))
+        _port_entry = QtWidgets.QLineEdit()
+
+        _but_ok = QtWidgets.QPushButton("Ok")
+        _but_ok.clicked.connect(_win.accept)
+        _but_cancel = QtWidgets.QPushButton("Cancel")
+        _but_cancel.clicked.connect(_win.reject)
+
+        _form.addRow(_city_list)
+        _form.addRow("IP свитча: ", _sw_ent)
+        _form.addRow("Порт свитча: ", _port_entry)
+        _form.addRow(_but_ok, _but_cancel)
+
+        _win.setLayout(_form)
+        # Окно запроса конец
+
+        result = _win.exec()
+        if result and _sw_ent.text() and _port_entry.text():
+            _city = _city_list.currentText()
+            state_pref = self.window.city[_city]
+            port = _port_entry.text()
+            switch = _sw_ent.text()
+            clients = []
+
+            path_with_clients = os.path.abspath(os.getcwd() + settings.client_to_multi_vlan)
+            try:
+                with open(path_with_clients) as f:
+                    vlan_list_to_create = f.read().splitlines()
+                    vlan_list_to_create = list(filter(None, vlan_list_to_create))
+            except Exception as e:
+                print(f"Ошибка открытия файла с клиентами: main.py:MainWindow->crea_mv\n{path_with_clients}\n{e}")
+            else:
+                for client in vlan_list_to_create:
+                    client = client.split()
+                    vname = client[0]
+                    vnum = client[1]
+                    tag = 't'
+                    _all_data_list = [
+                        state_pref,
+                        vname,
+                        vnum,
+                        switch,
+                        port,
+                        tag,
+                    ]
+                    clients.append(customers.Customer(*_all_data_list))
+
+                self._thread = CreateMulVlanThread(clients, self.window.p_sw)
+                self._thread.mysignal.connect(self.message_out)
+                self._thread.start()
 
     def dele_mv(self):
-        pass
+        self.statusBar().showMessage("Идёт удаление вланов ...")
+        # Окно запроса начало
+        _win = QtWidgets.QDialog()
+        _win.setWindowTitle("Удаление вланов по списку клиентов из файла.")
+        _form = QtWidgets.QFormLayout()
+
+        _city_list = QtWidgets.QComboBox()
+        _city_list.addItems(sorted(self.window.city))
+        _city_list.setCurrentText(self.window.city_list.currentText())
+        _sw_ent = QtWidgets.QLineEdit()
+        _sw_ent.setValidator(QtGui.QRegExpValidator(self.window.regexp_ip))
+
+        _but_ok = QtWidgets.QPushButton("Ok")
+        _but_ok.clicked.connect(_win.accept)
+        _but_cancel = QtWidgets.QPushButton("Cancel")
+        _but_cancel.clicked.connect(_win.reject)
+
+        _form.addRow(_city_list)
+        _form.addRow("IP свитча: ", _sw_ent)
+        _form.addRow(_but_ok, _but_cancel)
+
+        _win.setLayout(_form)
+        # Окно запроса конец
+
+        result = _win.exec()
+        if result and _sw_ent.text():
+            _city = _city_list.currentText()
+            state_pref = self.window.city[_city]
+            port = '999'
+            switch = _sw_ent.text()
+            clients = []
+
+            path_with_clients = os.path.abspath(os.getcwd() + settings.client_to_multi_vlan)
+            try:
+                with open(path_with_clients) as f:
+                    vlan_list_to_create = f.read().splitlines()
+                    vlan_list_to_create = list(filter(None, vlan_list_to_create))
+            except Exception as e:
+                print(f"Ошибка открытия файла с клиентами: main.py:MainWindow->dele_mv\n{path_with_clients}\n{e}")
+            else:
+                for client in vlan_list_to_create:
+                    client = client.split()
+                    vname = client[0]
+                    vnum = client[1]
+                    tag = 't'
+                    _all_data_list = [
+                        state_pref,
+                        vname,
+                        vnum,
+                        switch,
+                        port,
+                        tag,
+                    ]
+                    clients.append(customers.Customer(*_all_data_list))
+
+                self._thread = DelMulVlanThread(clients, self.window.p_sw, self)
+                self._thread.mysignal.connect(self.message_out)
+                self._thread.start()
 
 
 class ContentWindow(QtWidgets.QWidget):
