@@ -75,7 +75,7 @@ class CreateMulVlanThread(QtCore.QThread):
 class DelMulVlanThread(QtCore.QThread):
     mysignal = QtCore.pyqtSignal(str)
 
-    def __init__(self, clients, p_sw, main_window):
+    def __init__(self, clients, p_sw):
         super(DelMulVlanThread, self).__init__()
         self.clients = clients[:]
         self.p_sw = p_sw
@@ -417,9 +417,8 @@ class MainWindow(QtWidgets.QMainWindow):
         """ Поиск пути до свитча с линками """
         self.statusBar().showMessage("Ready")
         if value:
-            text = value.split('XXX')
-            _title = f"{text[0]} " + "_" * 80
-            _body = text[1]
+            _title, _body = value.split('XXX')
+            _title += "_" * 80
             win_name = _title
 
             QtWidgets.QInputDialog.getMultiLineText(None,
@@ -612,7 +611,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     ]
                     clients.append(customers.Customer(*_all_data_list))
 
-                self._thread = DelMulVlanThread(clients, self.window.p_sw, self)
+                self._thread = DelMulVlanThread(clients, self.window.p_sw)
                 self._thread.mysignal.connect(self.message_out)
                 self._thread.start()
 
@@ -622,7 +621,7 @@ class ContentWindow(QtWidgets.QWidget):
         super().__init__(parent=parent)
         self.setWindowTitle("Работа с клиентами.")
         self.parent = parent
-        # parent.statusBar().showMessage("Ready qweqwe")
+        # parent.statusBar().showMessage("Ready")
 
         if ico:
             self.setWindowIcon(ico)
