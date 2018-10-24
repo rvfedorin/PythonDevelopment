@@ -73,7 +73,7 @@ def client_handler(client_socket):
 
         while True:
             # show a simple prompt
-            client_socket.send(b"<BHP:#> ")
+            client_socket.send(b"<BHP:#>")
 
             # now we receive until we see a linefeed (enter key)
             cmd_buffer = ""
@@ -140,7 +140,7 @@ def client_sender(buffer):
                 if recv_len < 4096:
                     break
 
-            print(response.decode('cp866', errors='ignore'))
+            print(response.decode('cp866', errors='ignore'), end='')
 
             # wait for more input
             buffer = input()

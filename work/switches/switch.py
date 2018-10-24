@@ -145,7 +145,7 @@ class NewSwitch:
         res = []
         tn = self.connect()
         if tn[0] is False:
-            return False
+            return [False]
         else:
             tn = tn[1]
         try:

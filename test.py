@@ -1,8 +1,7 @@
-_list = [9, 8, 7, 6, 5, 3, 4, 2, 1]
-n = len(_list) - 1
-for i in range(n):
-    for j in range(n - i):
-        if _list[j] > _list[j+1]:
-            _list[j], _list[j+1] = _list[j+1], _list[j]
 
-print(_list)
+x = 's'
+digits = 4 if isinstance(x, str) else 2
+print(digits)
+print("%0*X" % (digits, ord(x)))
+print(f"{ord(x):0{digits}X}")
+print(f".{chr(0x7F)}.")

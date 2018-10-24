@@ -72,7 +72,8 @@ def del_code(clients, **kwargs):
                     code_line = "delete vlan vl {} \r".format(client.vlan_number)
                     code2_line = "delete vlan {} \r".format(client.vlan_name)
 
-                    answer_code_line += '\n'.join(sw_obj.send_command([code_line, save]))
+                    response = sw_obj.send_command([code_line, save])
+                    answer_code_line += '\n'.join(response if response else ["Error"])
 
                     if answer_code_line.find("Success") >= 0:
 
@@ -80,7 +81,8 @@ def del_code(clients, **kwargs):
                                        f"SUCCESS removed from {sw_port_edit[1]} ======= by VLAN NUMBER ===== \n"
                         print(print_string)
                     else:
-                        answer_code2_line = '\n'.join(sw_obj.send_command([code2_line, save]))
+                        response = sw_obj.send_command([code2_line, save])
+                        answer_code2_line = '\n'.join(response if response else ["Error"])
                         if answer_code2_line.find("Success") >= 0:
                             print_string = f"=============== {client.vlan_name} TAG {client.vlan_number} " \
                                            f"=== SUCCESS removed from {sw_port_edit[1]} ===== by NAME ======= \n"
