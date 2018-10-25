@@ -21,7 +21,7 @@ def server_loop(local_host, local_port, remote_host, remote_port, receive_first)
         client_socket, addr = server.accept()
 
         # print out the local connection information
-        print(f"[==>] Receive incoming connection frim {addr[0]}:{addr[1]}")
+        print(f"[==>] Receive incoming connection from {addr[0]}:{addr[1]}")
 
         # start a thread to talk to the remote host
         proxy_thread = threading.Thread(target=proxy_handler,
@@ -73,7 +73,7 @@ def proxy_handler(client_socket, remote_host, remote_port, receive_first):
                 print("[<==] Send to localhost.")
 
             # if no more data on either side, close the connection
-            if not len(remote_buffer) or len(local_buffer):
+            if not len(remote_buffer) and len(local_buffer):
                 client_socket.close()
                 remote_socket.close()
 
@@ -82,9 +82,9 @@ def proxy_handler(client_socket, remote_host, remote_port, receive_first):
                 break
 
 
-def receive_from(connection: socket)->str:
-    buffer = ''
-    connection.settimeout(2)
+def receive_from(connection: socket)->bytes:
+    buffer = b''
+    connection.settimeout(1)
 
     try:
         while True:
@@ -93,23 +93,23 @@ def receive_from(connection: socket)->str:
             if not data:
                 break
 
-            buffer += data.decode()
+            buffer += data
     except Exception as e:
-        print(e)
+        pass
 
     return buffer
 
 
 def hexdump(src, length=16):
     result = []
-    digits = 4 if isinstance(src, str) else 2
-
+    src = str(src)
+    digits = 4 if isinstance(src, bytes) else 2
     for i in range(0, len(src), length):
         s = src[i:i+length]
-        hexa = b' '.join([f"{ord(x):0{digits}X}" for x in s])
-        text = b''.join([x if 0x20 <= ord(x) < 0x7F else b'.' for x in s])
+        hexa = b' '.join([f"{ord(x):0{digits}X}".encode() for x in s])
+        text = b''.join([x.encode() if 0x20 <= ord(x) < 0x7F else b'.' for x in s])
         result.append(b"%04X %-*s %s" % (i, length * (digits + 1), hexa, text))
-        print(b'\n'.join(result))
+        print((b'\n'.join(result)).decode())
 
 
 def response_handler(buffer: str)->str:
@@ -144,3 +144,6 @@ def main():
     # now spin up our listening socket
     server_loop(local_host, local_port, remote_host, remote_port, receive_first)
 
+
+if __name__ == '__main__':
+    main()
