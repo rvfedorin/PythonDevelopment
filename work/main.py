@@ -344,7 +344,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def about():
         QtWidgets.QMessageBox.about(None,
                                     "О программе",
-                                    "Version 1.0.2\nPowered by Roman Fedorin")
+                                    "Version 1.0.3\nPowered by Roman Fedorin")
 
     @staticmethod
     def help():
@@ -509,6 +509,9 @@ class MainWindow(QtWidgets.QMainWindow):
         _sw_ent.setValidator(QtGui.QRegExpValidator(self.window.regexp_ip))
         _port_entry = QtWidgets.QLineEdit()
 
+        file_edit = os.path.abspath(os.getcwd()+settings.client_to_multi_vlan)
+        _but_edit = QtWidgets.QPushButton("Редактировать файл с клиентами")
+        _but_edit.clicked.connect(lambda: os.startfile(file_edit))
         _but_ok = QtWidgets.QPushButton("Ok")
         _but_ok.clicked.connect(_win.accept)
         _but_cancel = QtWidgets.QPushButton("Cancel")
@@ -517,6 +520,7 @@ class MainWindow(QtWidgets.QMainWindow):
         _form.addRow(_city_list)
         _form.addRow("IP свитча: ", _sw_ent)
         _form.addRow("Порт свитча: ", _port_entry)
+        _form.addRow(_but_edit)
         _form.addRow(_but_ok, _but_cancel)
 
         _win.setLayout(_form)
@@ -570,6 +574,9 @@ class MainWindow(QtWidgets.QMainWindow):
         _sw_ent = QtWidgets.QLineEdit()
         _sw_ent.setValidator(QtGui.QRegExpValidator(self.window.regexp_ip))
 
+        file_edit = os.path.abspath(os.getcwd() + settings.client_to_multi_vlan)
+        _but_edit = QtWidgets.QPushButton("Редактировать файл с клиентами")
+        _but_edit.clicked.connect(lambda: os.startfile(file_edit))
         _but_ok = QtWidgets.QPushButton("Ok")
         _but_ok.clicked.connect(_win.accept)
         _but_cancel = QtWidgets.QPushButton("Cancel")
@@ -577,6 +584,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         _form.addRow(_city_list)
         _form.addRow("IP свитча: ", _sw_ent)
+        _form.addRow(_but_edit)
         _form.addRow(_but_ok, _but_cancel)
 
         _win.setLayout(_form)
