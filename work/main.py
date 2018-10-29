@@ -90,7 +90,9 @@ class DelMulVlanThread(QtCore.QThread):
 
             res = self._queue.get()
         except Exception as e:
-            print(e)
+            _t = f"Ошибка удаления main.py:DelMulVlanThread: {e}"
+            print(_t)
+            self.mysignal.emit(f"Удаление вланов по списку XXX{_t}\n")
         else:
             # XXX разделитель заголовка и тела сообщения
             self.mysignal.emit(f"Удаление вланов по списку XXXСделано.\n{res}")
@@ -342,7 +344,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def about():
         QtWidgets.QMessageBox.about(None,
                                     "О программе",
-                                    "Version 1.0.1\nPowered by Roman Fedorin")
+                                    "Version 1.0.2\nPowered by Roman Fedorin")
 
     @staticmethod
     def help():
