@@ -342,7 +342,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def about():
         QtWidgets.QMessageBox.about(None,
                                     "О программе",
-                                    "Version 1.0.0\nPowered by Roman Fedorin")
+                                    "Version 1.0.1\nPowered by Roman Fedorin")
 
     @staticmethod
     def help():
@@ -966,8 +966,11 @@ class ContentWindow(QtWidgets.QWidget):
 
                 if _cisco_created:  # если создан объект циски
                     self.parent.statusBar().showMessage("Идёт удаление клиента на cisco")
-                    _cisco.delete_from_cisco([_client])
-                    text += "\nКлиент на cisco удалён.\n"
+                    result_delete = _cisco.delete_from_cisco([_client])  # [False, clients_not_found] or if allgood [log]
+                    if result_delete[0]:
+                        text += "\nКлиент на cisco удалён.\n"
+                    else:
+                        text += f"\nОшибка удаления клиента на cisco.\n {result_delete[1]}\n"
 
             elif self.rb_speed.isChecked():   # ###################### СКОРОСТЬ
                 print("Смена скорости.")

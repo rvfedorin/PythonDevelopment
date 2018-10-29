@@ -1,4 +1,4 @@
-# ver 1.0.0
+# ver 1.0.1
 # created by Roman Fedorin
 
 import telnetlib
@@ -186,15 +186,17 @@ class CiscoCreate:
 
             tn.close()
 
-            if len(clients_not_found) > 0:
-                print('=' * 94)
-                print('=' * 41, ' NOT FOUNDS ', '=' * 41)
-                print(clients_not_found)
-                print('=' * 94)
-                print('=' * 94)
+        if clients_not_found:
+            print('=' * 94)
+            print('=' * 41, ' NOT FOUNDS ', '=' * 41)
+            print(clients_not_found)
+            print('=' * 94)
+            print('=' * 94)
 
-            save_log.create_log(log_string, self.city_pref, 'delete_vlan_cisco')
-        return log_string
+        if clients_not_found:
+            return [False, clients_not_found]
+        else:
+            return [True, log_string]
 
     # ФУНКЦИИ  СОЗДАНИЯ
     def login_on_cisco(self, cisco):
