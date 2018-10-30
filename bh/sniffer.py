@@ -21,7 +21,8 @@ if os.name == "nt":
     sniffer.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
 
 # read in a single packet
-print(sniffer.recvfrom(65565))
+pack = sniffer.recvfrom(65565)
+print(pack[0], pack[1])
 
 # if we are using Windows, turn off promiscuous mode
 if os.name == "nt":
