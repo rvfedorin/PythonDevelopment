@@ -685,6 +685,7 @@ class ContentWindow(QtWidgets.QWidget):
         self.rb_create.setChecked(True)
         self.rb_delete = QtWidgets.QRadioButton("Удалить")
         self.rb_speed = QtWidgets.QRadioButton("Сменить скорость")
+        self.rb_speed.setStatusTip("Не забудьте выбрать город, в котором требуется сменить скорость!")
 
         # Блок кнопок и выбора города
         self.city_list = QtWidgets.QComboBox()
