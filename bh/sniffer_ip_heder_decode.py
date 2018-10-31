@@ -1,7 +1,7 @@
 import os
 import socket
 import struct
-from ctypes import Structure, c_ubyte, c_ushort, c_ulong
+from ctypes import Structure, c_ubyte, c_ushort, c_ulong#, sizeof
 
 # host to listen on
 host = "192.168.40.17"
@@ -12,18 +12,22 @@ class IP(Structure):
     _fields_ = [
         ("ihl", c_ubyte, 4),
         ("version", c_ubyte, 4),
-        ("tos", c_ubyte),
-        ("len", c_ushort),
+        ("tos", c_ubyte),  # 1
+        ("len", c_ushort),  # 2
         ("id", c_ushort),
         ("offset", c_ushort),
         ("ttl", c_ubyte),
         ("protocol_num", c_ubyte),
         ("sum", c_ushort),
-        ("src", c_ulong),
+        ("src", c_ulong),  # 4
         ("dst", c_ulong),
     ]
 
     def __new__(cls, socket_buffer=None):
+        # print(f"c_ubyte {sizeof(c_ubyte)}")
+        # print(f"c_ushort {sizeof(c_ushort)}")
+        # print(f"c_ulong {sizeof(c_ulong)}")
+
         return cls.from_buffer_copy(socket_buffer)
 
     def __init__(self, socket_buffer=None):
@@ -67,6 +71,7 @@ try:
 
         # print out the protocol that was detected and the hosts
         print(f"Protocol: {ip_header.protocol} {ip_header.src_address} -> {ip_header.dst_address}")
+
 # Handle Ctrl+C
 except KeyboardInterrupt:
     # if we are using Windwos, turn off promiscuous mode

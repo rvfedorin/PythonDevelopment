@@ -464,7 +464,10 @@ class MainWindow(QtWidgets.QMainWindow):
             row = _default = 4
             text = ''
 
+            #           свитч              его соседи
+            #  out: {'172.17.127.142 ': {'172.17.152.222', '172.17.124.242 '}}
             neighbors = all_neighbor.get_graph_neighbors(_key, _ip)
+
             if with_clients:
                 text += f'{_ip}\n{all_neighbor.get_clients_from_intranet(_key, _ip)}'
 
@@ -473,8 +476,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     for sw in neighbors[key]:
                         sw = sw.strip()
                         if with_clients:
-                            print(f'mode: with_clients=True. Prefix "{_key}" ')
-                            text += f'{sw}\n{all_neighbor.get_clients_from_intranet(_key, _ip)}'
+                            # print(f'mode: with_clients=True. Prefix "{_key}" ')
+                            text += f'{sw}\n{all_neighbor.get_clients_from_intranet(_key, sw)}'
                         else:
                             if row == 0:
                                 text += sw + '; \n'

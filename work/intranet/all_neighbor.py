@@ -1,4 +1,4 @@
-# ver 1.0.1
+# ver 1.0.2
 # created by Roman Fedorin
 import shelve
 from xlrd import open_workbook
@@ -12,7 +12,7 @@ def get_graph_neighbors(op, sw):
     _op, _sw = op, sw
     graph_neighbors = dict()
     que = deque([_sw + ' '])
-    # ip_pattern = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+    ip_pattern = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
     city_shelve = settings.city_shelve
 
     with shelve.open(city_shelve) as db:
@@ -39,7 +39,7 @@ def get_graph_neighbors(op, sw):
                 neighbor = len(findall(current_sw, str(sheet.row_values(row)[col_sw + 1])))
                 if neighbor:
                     ip_neighor = str(sheet.row_values(row)[col_sw])
-                    if ip_neighor:
+                    if ip_neighor and findall(ip_pattern, ip_neighor):
                         if current_sw in graph_neighbors:
                             graph_neighbors[current_sw].add(ip_neighor)
                             que.append(ip_neighor + ' ')
