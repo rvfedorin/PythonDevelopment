@@ -1,10 +1,26 @@
 import os
 import socket
 import struct
-from ctypes import Structure, c_ubyte, c_ushort, c_ulong, sizeof
+from ctypes import Structure, c_ubyte, c_ushort, c_ulong
+import threading
+import time
+from netaddr import IPNetwork, IPAddress
 
 
 host = "192.168.40.17"
+subnett = "192.168.40.0/24"
+magic_message = b"PYTHONRULES!!"
+
+
+def udp_sender(subnett, magic_message):
+    time.sleep(2)
+    sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    for ip in IPNetwork(subnett):
+        try:
+            sender.sendto(magic_message, (f"{ip}", 65212))
+        except:
+            pass
 
 
 class IP(Structure):
@@ -58,8 +74,13 @@ class ICMP(Structure):
         pass
 
 
+# start sending packets
+t = threading.Thread(target=udp_sender, args=(subnett, magic_message))
+t.start()
+
+
 if os.name == "nt":
-    socket_protocol = socket.IPPROTO_IP
+    socket_protocol = socket.IPPROTO_ICMP
 else:
     socket_protocol = socket.IPPROTO_ICMP
 
@@ -69,6 +90,7 @@ sniffer.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
 
 if os.name == "nt":
     sniffer.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
+
 
 try:
     while True:
@@ -81,7 +103,7 @@ try:
         ip_header = IP(raw_ip_header)
 
         # print out the protocol that was detected and the hosts
-        print(f"Protocol: {ip_header.protocol} {ip_header.src_address} -> {ip_header.dst_address}")
+        # print(f"Protocol: {ip_header.protocol} {ip_header.src_address} -> {ip_header.dst_address}")
 
         if ip_header.protocol == "ICMP":
 
@@ -90,7 +112,15 @@ try:
             buf = raw_buffer[offset:offset+36]
             icmp_header = ICMP(buf)
 
-            print(f"\t  ICMP -> Type: {icmp_header.type} Code: {icmp_header.code}")
+            # print(f"\t  ICMP -> Type: {icmp_header.type} Code: {icmp_header.code}")
+
+            if icmp_header.type == 3 and icmp_header.code == 3:
+                # make sure host is in our target net
+                if IPAddress(ip_header.src_address) in IPNetwork(subnett):
+                    # make sure it has our magic message
+                    _mess = raw_buffer[len(raw_buffer) - len(magic_message):]
+                    if _mess == magic_message:
+                        print(f"Host UP: {ip_header.src_address} it has message {_mess}")
 
 
 # Handle Ctrl+C
