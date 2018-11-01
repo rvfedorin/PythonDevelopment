@@ -3,22 +3,24 @@
 # print(f"{192:08b}.{168:08b}.{128:08b}.{128:08b}")
 
 
-position = 7
+position = 3
 variable = [0, 1]
-p = 0
-temp = {}
-while p <= position:
-    temp[p] = []
+
+temp_previous = []
+temp_last = []
+
+for p in range(position):
     for v in variable:
         if p > 0:
-            for back_pos in temp[p-1]:
-                temp[p].append(f"{back_pos}{v}")
+            for back_pos in temp_previous:
+                temp_last.append(f"{back_pos}{v}")
         else:
-            temp[p].append(f"{v}")
+            temp_last.append(f"{v}")
+    temp_previous = temp_last[:]
+    temp_last.clear()
 
-    p += 1
 
-for i in temp[position]:
+for i in sorted(temp_previous):
+    # print(int(i, 2))
     print(i)
 
-print(len(temp[position]))
