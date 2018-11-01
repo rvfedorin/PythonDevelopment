@@ -48,6 +48,7 @@ def get_all_ip_in_lan(list_lan):
             ip_of_all_lan.append(f'{lan_ip[0]}.{lan_ip[1]}.{lan_ip[2]}.{four_octet}')
     return ip_of_all_lan
 
+
 if __name__ == '__main__':
     all_ip = []
     for i in range(256):

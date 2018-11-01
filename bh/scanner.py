@@ -13,7 +13,7 @@ magic_message = b"PYTHONRULES!!"
 
 
 def udp_sender(subnett, magic_message):
-    time.sleep(2)
+    time.sleep(5)
     sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     for ip in IPNetwork(subnett):
@@ -120,7 +120,7 @@ try:
                     # make sure it has our magic message
                     _mess = raw_buffer[len(raw_buffer) - len(magic_message):]
                     if _mess == magic_message:
-                        print(f"Host UP: {ip_header.src_address} it has message {_mess}")
+                        print(f"Host UP: {ip_header.src_address}")
 
 
 # Handle Ctrl+C
