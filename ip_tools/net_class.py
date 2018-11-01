@@ -44,17 +44,25 @@ class NET:
 
     def include_nets(self, in_cidr):
         if int(in_cidr) > int(self.cidr):
-            if int(in_cidr) < 8:
+            if int(self.cidr) < 8:
                 return f"{256 - 2**(8-int(self.cidr))}.0.0.0"
-            elif int(in_cidr) < 16:
+            elif int(self.cidr) < 16:
                 return f"255.{256 - 2**(16-int(self.cidr))}.0.0"
-            elif int(in_cidr) < 24:
-                return f"255.255.{256 - 2**(24-int(self.cidr))}.0"
-            elif int(in_cidr) < 32:
-                _last = int(self.get_octet(4))
+            elif int(self.cidr) < 24:
                 result = []
+
+                _last = int(self.get_octet(4))
                 while _last <= (256 - 2 ** (32 - int(in_cidr))):
                     _lan = f"{self.get_octet(1)}.{self.get_octet(2)}.{self.get_octet(3)}.{_last}/{in_cidr}"
+                    result.append(_lan)
+                    _last += 2 ** (32 - int(in_cidr))
+                return result
+            elif int(self.cidr) < 32:
+                result = []
+
+                _last = int(self.get_octet(4))
+                while _last <= (256 - 2 ** (32 - int(in_cidr))):
+                    _lan = f"{self.get_octet(1)}.{self.get_octet(2)}.{self.get_octet(3)}.{_last}"  #/{in_cidr}
                     result.append(_lan)
                     _last += 2 ** (32 - int(in_cidr))
                 return result
@@ -63,11 +71,13 @@ class NET:
 
 
 if __name__ == '__main__':
+
     ip = IP('192.168.10.10')
-    net = NET('192.168.10.0/24')
+    net = NET('192.168.0.0/24')
 
     # print(net.ip_in_net(ip))
     # print(net.mask)
 
-    for i in net.include_nets(25):
-        print(i)
+    for i in net.include_nets(30):
+        o1, o2, o3, o4 = i.split('.')
+        print(f"{int(o1):08b}.{int(o2):08b}.{int(o3):08b}.{int(o4):08b}")

@@ -1,7 +1,4 @@
-oct = 11
-mas = 255
-sum = oct & mas
 
-print(bin(oct))
-print(bin(mas))
-print(sum)
+print(f"{192:08b}.{168:08b}.{0:08b}.{0:08b}")
+
+print(f"{192:08b}.{168:08b}.{128:08b}.{128:08b}")
