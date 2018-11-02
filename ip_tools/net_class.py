@@ -78,6 +78,6 @@ if __name__ == '__main__':
     # print(net.ip_in_net(ip))
     # print(net.mask)
 
-    for i in net.include_nets(30):
+    for i in net.include_nets(26):
         o1, o2, o3, o4 = i.split('.')
         print(f"{int(o1):08b}.{int(o2):08b}.{int(o3):08b}.{int(o4):08b}")
