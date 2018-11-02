@@ -1,15 +1,5 @@
 
 # print(f"{192:08b}.{168:08b}.{0:08b}.{0:08b}")
-<<<<<<< HEAD
-#
-# print(f"{192:08b}.{168:08b}.{128:08b}.{128:08b}")
-
-a = [0, 0, 0]
-b = [1, 0]
-
-for i,v in enumerate(a):
-    print(i)
-=======
 # print(f"{192:08b}.{168:08b}.{128:08b}.{128:08b}")
 
 
@@ -60,5 +50,5 @@ if __name__ == '__main__':
     for i in all_yeld:
         # print(int(i, 2))
         print(i)
->>>>>>> 0e840d38b2f3df1272274fb02f8611bf61f9ca10
+
 
