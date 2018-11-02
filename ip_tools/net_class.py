@@ -69,6 +69,31 @@ class NET:
         else:
             return False
 
+    @staticmethod
+    def combine(pos: int, variable=None):
+        """
+        Генерирует все возможные комбинации в pos позиций на список переменных variable
+        :param pos: int количесво позиций
+        :param variable: list список значений для перебора
+        :return: list список готовых комбинаций
+        """
+
+        temp_previous = []
+        temp_last = []
+        if variable is None:
+            variable = [0, 1]
+
+        for p in range(pos):
+            for v in variable:
+                if p > 0:
+                    for back_pos in temp_previous:
+                        temp_last.append(f"{back_pos}{v}")
+                else:
+                    temp_last.append(f"{v}")
+            temp_previous = temp_last[:]
+            temp_last.clear()
+        return temp_previous[:]
+
 
 if __name__ == '__main__':
 

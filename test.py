@@ -42,13 +42,15 @@ def combine_yeld(pos: int, variable=None):
 
 if __name__ == '__main__':
 
-    position = 3
+    position = 5
 
     all_variants = combine(position)
     all_yeld = combine_yeld(position)
 
-    for i in all_yeld:
-        # print(int(i, 2))
-        print(i)
+    # for i in all_variants:
+    #     # print(int(i, 2))
+    #     print(i)
+
+
 
 
