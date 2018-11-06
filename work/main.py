@@ -5,6 +5,7 @@ import shelve
 from Cryptodome.Cipher import Blowfish
 from functools import partial
 from multiprocessing import Pool, Manager
+from time import sleep
 
 from work import settings
 from work.tools import work_with_db, customers
@@ -344,7 +345,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def about():
         QtWidgets.QMessageBox.about(None,
                                     "О программе",
-                                    "Version 1.0.3\nPowered by Roman Fedorin")
+                                    "Version 1.0.5\nPowered by Roman Fedorin")
 
     @staticmethod
     def help():
@@ -412,11 +413,14 @@ class MainWindow(QtWidgets.QMainWindow):
                     self._thread = PathSwThread(ended_switch, column_ip, root_port, root_sw, city, self.window.p_sw)
                     self._thread.mysignal.connect(self.message_out)
                     self._thread.start()
+
+                    self.work_in_progress()
+
+
         else:
             self.statusBar().showMessage("Ready")
 
     def message_out(self, value):
-        """ Поиск пути до свитча с линками """
         self.statusBar().showMessage("Ready")
         if value:
             _title, _body = value.split('XXX')
@@ -427,6 +431,17 @@ class MainWindow(QtWidgets.QMainWindow):
                                                     win_name,
                                                     _title,
                                                     text=_body)
+
+    def work_in_progress(self):
+        count = 1
+        while self._thread.isRunning():
+            sleep(1)
+            _text = "." * count
+            self.statusBar().showMessage(_text)
+            if count > 25:
+                count = 1
+            else:
+                count += 1
 
     def connected_sw(self):
         # Окно запроса начало
