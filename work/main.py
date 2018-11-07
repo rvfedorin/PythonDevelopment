@@ -345,7 +345,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def about():
         QtWidgets.QMessageBox.about(None,
                                     "О программе",
-                                    "Version 1.0.5\nPowered by Roman Fedorin")
+                                    "Version 1.0.6\nPowered by Roman Fedorin")
 
     @staticmethod
     def help():
@@ -895,11 +895,15 @@ class ContentWindow(QtWidgets.QWidget):
             try:
                 _cisco = cisco_class.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
             except Exception as e:
-                print(f"Ошибка создания интерфейса Cisco {e}")
+                print(f"Ошибка создания объекта Cisco {e}")
             else:
-                res = _cisco.get_free_interface()
-                if not res:
-                    res = f'Error connect to cisco: {_city}'
+                try:
+                    res = _cisco.get_free_interface()
+                except Exception as e:
+                    res = f'Error connect to cisco: {_city}; \n{e}'
+                else:
+                    if not res:
+                        res = f'Error connect to cisco: {_city}'
                 # print(res)
                 _title = f"Свободные интерфейсы на Cisco {_city} " + '_' * 40
                 QtWidgets.QInputDialog.getMultiLineText(None,
@@ -973,6 +977,8 @@ class ContentWindow(QtWidgets.QWidget):
                     text += f'\n{res[1]}'
                 elif res[0]:
                     text += 'Клиент на свитчах создан.\n'
+                else:
+                    text += '[!!!] Ошибка создания клиента на свитчах.\n'
 
                 if _cisco_created:  # ###################### СОЗДАНИЕ
                     print("Идёт создание клиента на cisco")
@@ -981,6 +987,9 @@ class ContentWindow(QtWidgets.QWidget):
                     if len(result_create) > 1 and not result_create[0]:
                         res[0] = False
                         text += f'{res[1]}\n\nERROR CREATE ON CISCO!!!\n{result_create[1]}'
+                    elif not result_create[0]:
+                        res[0] = False
+                        text += f'\n\nERROR CREATE ON CISCO!!!\nMaybe NOT FOUND'
                     else:
                         text += "\nКлиент на cisco создан.\n"
 

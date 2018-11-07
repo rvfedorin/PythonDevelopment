@@ -54,8 +54,8 @@ def poison_target(gateway, gateway_mac, target_ip, target_mac):
 if __name__ == '__main__':
 
     interface = "Realtek PCIe GBE Family Controller"  # 11 Realtek PCIe GBE Family Controller
-    target_ip = "192.168.40.13"
-    gateway = "192.168.40.1"
+    target_ip = "192.168.40.13"  # 192.168.168.106
+    gateway = "192.168.40.1"  # 192.168.168.1
 
     packet_count = 1000
 
