@@ -13,7 +13,19 @@ class CreateRwr:
 
     @property
     def sector(self):
-        return self.ip
+        mint_map = self.send_command(["mint map det"])
+        if mint_map[0]:
+            try:
+                mint_map_to_string_list = str(mint_map).split(r'\r\n')
+                string_with_sector = mint_map_to_string_list[11].split()
+                sector = string_with_sector[1]
+            except Exception as e:
+                print(f"Error detection of sector.\n{e}")
+                return False
+            return sector
+
+        else:  # if mint_map[0]:
+            return False
 
     # заглушка для служебных telnet ответов
     def _bulk(self, _self, cmd, opt):
@@ -29,7 +41,7 @@ class CreateRwr:
             print(text)
             return [False, e]
         else:
-            print("Autorization ...")
+            print("Authorisation ...")
             tn.read_until(b"Login:", timeout=1)
             tn.write(self.login + b"\r")
             tn.read_until(b":", timeout=1)
@@ -76,11 +88,13 @@ if __name__ == '__main__':
     import settings
     from Cryptodome.Cipher import Blowfish
 
-    key = b"12341234"
+    key = b"#########"
     cipher = Blowfish.new(key, Blowfish.MODE_CBC, settings.iv)
     p_rwr_cl = cipher.decrypt(settings.p_rwr_cl).decode().split('1111')[0]
 
-    rwr = CreateRwr("172.16.44.230", passw=p_rwr_cl)
-    response = rwr.send_command(["co sh mint"])
-    print(response[0])
+    rwr = CreateRwr("172.17.1.114", passw=p_rwr_cl)
+    print(rwr.sector)
+    # response = rwr.send_command(["mint map det"])
+    # for i,v  in enumerate(str(response).split(r'\r\n')):
+    #     print(f"stirng {i} --> {v}")
 
