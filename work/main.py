@@ -1059,6 +1059,8 @@ class RwrContentWindow(QtWidgets.QWidget):
         self.key_pass = None
         self.p_un_sup = None
         self.p_sw = None
+        self.p_rwr_cl = None
+        self.p_rwr_sec = None
         self.my_key = None
         self.my_key_e = None
 
@@ -1185,6 +1187,10 @@ class RwrContentWindow(QtWidgets.QWidget):
                 self.p_un_sup = cipher.decrypt(settings.p_un_sup).decode().split('1111')[0]
                 cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
                 self.p_sw = cipher.decrypt(settings.p_sw).decode().split('1111')[0]
+                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
+                self.p_rwr_cl = cipher.decrypt(settings.p_rwr_cl).decode().split('1111')[0]
+                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
+                self.p_rwr_sec = cipher.decrypt(settings.p_rwr_sec).decode().split('1111')[0]
                 cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
                 self.my_key = cipher.decrypt(settings.my_key).decode().split('1111')[0]
                 cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
