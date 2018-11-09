@@ -13,7 +13,21 @@ ico = "ico.jpg"
 iv = b'\x88\xc3p\\\xd6\xb8\xcb\xa3'
 p_un_sup = b'a&7\x89\xeca\x99%p!_\xef\xdd\xb9\x8f\x16'
 p_sw = b"@\xea\x88\xc0\xe9'y\xa0"
+p_rwr_cl = b'\x0b\x87\xaf\x99\x86\xd2[\x9c#4\xcb\xd0\xe7\xcc\x14\x93'
+p_rwr_sec = b'\xd4\xab\x8e!\xd5\xac\xcd\xc9'
 my_key = b'\xd4\xab\x8e!\xd5\xac\xcd\xc9\x1d\x8c/\xa1U\xf8\xdf\xfe'
 my_key_e = b'u\x97f\x1b\xa8\xc7-\x99\xa9\x9cP\xad\xc4\xd6<\x11'
 
-#  GUI
+
+if __name__ == '__main__':
+    from Cryptodome.Cipher import Blowfish
+
+    key = b"321321"
+    passw = b"123123"
+    vect = b'12345678'
+
+    cipher = Blowfish.new(key, Blowfish.MODE_CBC, vect)
+    res = cipher.encrypt(passw)
+    print(res)
+
+
