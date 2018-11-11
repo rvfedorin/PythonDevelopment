@@ -1,4 +1,5 @@
 import telnetlib
+import os
 
 # my
 import settings
@@ -8,6 +9,8 @@ import intranet
 class CreateRwr:
     def __init__(self, ip, passw, login='root'):
         self.ip = ip
+        self.sector_name = None
+        self.sector_ip = None
         self.login = login.encode()
         self.passw = passw.encode()
 
@@ -22,10 +25,16 @@ class CreateRwr:
             except Exception as e:
                 print(f"Error detection of sector.\n{e}")
                 return False
+            if self.sector_name is None:
+                self.sector_name = sector
             return sector
 
         else:  # if mint_map[0]:
             return False
+
+    def get_sector_ip(self):
+        file_path = os.path.dirname(os.path.abspath(__file__))
+        return file_path
 
     # заглушка для служебных telnet ответов
     def _bulk(self, _self, cmd, opt):
@@ -88,12 +97,12 @@ if __name__ == '__main__':
     import settings
     from Cryptodome.Cipher import Blowfish
 
-    key = b"#########"
+    key = b"########"
     cipher = Blowfish.new(key, Blowfish.MODE_CBC, settings.iv)
     p_rwr_cl = cipher.decrypt(settings.p_rwr_cl).decode().split('1111')[0]
 
     rwr = CreateRwr("172.17.1.114", passw=p_rwr_cl)
-    print(rwr.sector)
+    print(rwr.get_sector_ip())
     # response = rwr.send_command(["mint map det"])
     # for i,v  in enumerate(str(response).split(r'\r\n')):
     #     print(f"stirng {i} --> {v}")
