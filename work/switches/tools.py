@@ -1,6 +1,6 @@
 # Created by Fedorint Roman
 # Script create switch
-# ver 1.0.0
+# ver 1.0.1
 
 from telnetlib import Telnet
 from socket import timeout
@@ -145,7 +145,8 @@ def send_command(command_list, _ip, _passw, _dict_done=None):
     res = []
     tn = connect(_ip, _passw=_passw)
     if tn[0] is False:
-        return False
+        _dict_done[_ip] = [False]
+        return [False]
     else:
         tn = tn[1]
     try:

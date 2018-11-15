@@ -1,6 +1,6 @@
 import shelve
 from xlrd import open_workbook
-from work import settings
+import settings
 
 
 def get_data_from_intranet(state):  # ip + path (via port 1 sw 11111 to port)

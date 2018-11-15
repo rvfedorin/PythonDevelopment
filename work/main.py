@@ -7,11 +7,11 @@ from functools import partial
 from multiprocessing import Pool, Manager
 from time import sleep
 
-from work import settings
-from work.tools import work_with_db, customers
-from work.cisco import cisco_class
-from work.switches import switch, create_vlan, del_vlan
-from work.intranet import full_path_to_sw, tools, all_neighbor
+import settings
+from tools import work_with_db, customers
+from cisco import cisco_class
+from switches import switch, create_vlan, del_vlan
+from intranet import full_path_to_sw, tools, all_neighbor
 
 
 def get_list_cities():
@@ -50,6 +50,8 @@ class PathSwThread(QtCore.QThread):
                 try:
                     _path_with_links = full_path_to_sw.type_connection(_path_to_sw[1], _passw=self.p_sw)
                 except Exception as e:
+                    self.mysignal.emit(
+                        f"Путь до свитча {self.ended_switch}XXXОшибка подключения: {e}\nПуть:{_path_to_sw}")
                     print(e)
                 else:
                     self.mysignal.emit(f"Путь до свитча {self.ended_switch}XXX{_path_with_links[1]}")
@@ -350,7 +352,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def about():
         QtWidgets.QMessageBox.about(None,
                                     "О программе",
-                                    "Version 1.0.6\nPowered by Roman Fedorin")
+                                    "Version 1.0.7\nPowered by Roman Fedorin")
 
     @staticmethod
     def help():

@@ -7,8 +7,8 @@ import queue
 import re
 #  My
 
-from work.switches import switch
-from work.tools import save_log
+from switches import switch
+from tools import save_log
 
 
 filename = "./nodepath"
@@ -33,17 +33,27 @@ def send_command_to_sw(sw_param, clients: list, messages_queue, login='admin', p
 
         crea_vl = f"create vlan {client.vlan_name} tag {client.vlan_number}\r"
 
-        message += '\n'.join(sw_obj.send_command([crea_vl, conf_vl]))
+        response = sw_obj.send_command([crea_vl, conf_vl])
+        if response[0]:
+            message += '\n'.join(response)
+        else:
+            message += f'Error on {sw_obj.ip}'
 
         if sw_obj.ip == client.switch:
             if client.tag == "U" or client.tag == "u":
                 del_from_def = f"conf vlan default del {client.sw_port} \r"
                 add_untagged = f"conf vlan {client.vlan_name} add untagged {client.sw_port}\r"
-                message += '\n'.join(sw_obj.send_command([del_from_def, add_untagged]))
+                response = sw_obj.send_command([del_from_def, add_untagged])
+
             elif client.tag == "T" or client.tag == "t":
                 add_tagged = f"conf vlan {client.vlan_name} add tagged {client.sw_port}\r"
                 _save = 'save\n'
-                message += '\n'.join(sw_obj.send_command([add_tagged, _save]))
+                response = sw_obj.send_command([add_tagged, _save])
+
+            if response[0]:
+                message += '\n'.join(response)
+            else:
+                message += f'Error on {sw_obj.ip}'
 
     if 'DGS-1210' in message:
         pattern = '(Saving all configurations.*Saving all configurations)'
@@ -71,6 +81,8 @@ def format_order_message(_queue, string_sw):
             _error.append(f'\nVlan exist on: {switch} - See log.')
         elif 'Timeout telnet to' in _to_print:
             _error.append(f'Timeout telnet to {switch}')
+        elif 'Error on' in _to_print:
+            _error.append(f'\n[!!!] Error on {switch}')
         elif 'DES-2108' in _to_print:
             _error.append(f'Error {switch} is DES-2108')
 

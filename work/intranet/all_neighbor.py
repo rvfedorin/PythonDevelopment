@@ -5,7 +5,7 @@ from xlrd import open_workbook
 from re import findall
 from collections import deque
 # my
-from work import settings
+import settings
 
 
 def get_graph_neighbors(op, sw):

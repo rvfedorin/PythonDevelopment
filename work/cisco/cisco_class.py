@@ -7,8 +7,8 @@ import paramiko
 import re
 import os
 from socket import timeout
-from work.tools import save_log
-from work import settings
+from tools import save_log
+import settings
 
 
 class CiscoCreate:

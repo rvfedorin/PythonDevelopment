@@ -1,12 +1,12 @@
 # Created by Fedorint Roman
 # Script create path to switch
-# ver 1.0.0
+# ver 1.0.1
 
 from re import findall, sub
 from sys import exc_info
 import multiprocessing as mp
 
-from work.switches import tools as sw_tools
+from switches import tools as sw_tools
 
 
 def format_connect(path_up, for_switch):
@@ -104,21 +104,29 @@ def type_connection(full_path_switch: str, _passw, _login='admin'):
 
     for sw_line in full_path_switch:
         switch_ports = sw_line.split('-')
-        if len(switch_ports) > 2:
-            port_up, port_down = _dict_done[switch_ports[1]]
+
+        if _dict_done[switch_ports[1]][0]:
+            if len(switch_ports) > 2:
+                port_up, port_down = _dict_done[switch_ports[1]]
+            else:
+                port_up = ''.join(_dict_done[switch_ports[1]])
+                switch_ports.append('Client.')
+                port_down = '-?-)'
+
+            for key in _speed:
+                if key in port_up:
+                    port_up = _speed[key]
+                else:
+                    port_up = "UNKNOWN"
+
+                if key in port_down:
+                    port_down = f'{_speed[key]})-->'
+                else:
+                    port_up = "UNKNOWN"
+
+            connect = f'({switch_ports[0]}{port_up})-{switch_ports[1]}-({switch_ports[2]}{port_down}'
         else:
-            port_up = ''.join(_dict_done[switch_ports[1]])
-            switch_ports.append('Client.')
-            port_down = '-?-)'
-
-        for key in _speed:
-            if key in port_up:
-                port_up = _speed[key]
-
-            if key in port_down:
-                port_down = f'{_speed[key]})-->'
-
-        connect = f'({switch_ports[0]}{port_up})-{switch_ports[1]}-({switch_ports[2]}{port_down}'
+            connect = f'Error connect to {switch_ports[1]}-->'
 
         new_path += connect
 

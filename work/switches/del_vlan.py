@@ -2,8 +2,8 @@
 # created by Roman Fedorin
 
 # from sys import exit
-from work.tools import save_log
-from work.switches import switch
+from tools import save_log
+from switches import switch
 
 
 def op_define(mnemokod):

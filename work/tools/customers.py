@@ -4,8 +4,8 @@ import shelve
 from xlrd import open_workbook
 # from re import findall
 # my
-from work.intranet import full_path_to_sw
-from work import settings
+from intranet import full_path_to_sw
+import settings
 
 
 class Customer:

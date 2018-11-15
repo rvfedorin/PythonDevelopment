@@ -3,7 +3,7 @@
 
 import shelve
 import os
-from work import settings
+import settings
 
 
 def delete_from_db(db, key):
