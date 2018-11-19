@@ -77,7 +77,6 @@ def type_connection(full_path_switch: str, _passw, _login='admin'):
     _trace = False
 
     _speed = {'10G': 'TenG', '1000M': 'Gi', '100M': 'Fa'}
-    _speed_list = ['TenG', 'Gi', 'Fa']
     new_path = ''
     full_path_switch = full_path_switch.split('--')
     _dict_done = mp.Manager().dict()
@@ -121,8 +120,8 @@ def type_connection(full_path_switch: str, _passw, _login='admin'):
                 if key in port_down:
                     port_down = _speed[key]
 
-            port_up = " UNKNOWN" if port_up not in _speed_list else port_up  # если нет линка среди списка
-            port_down = " UNKNOWN)-->" if port_down not in _speed_list else f"{port_down})-->"
+            port_up = " UNKNOWN" if port_up not in _speed.values() else port_up  # если нет линка среди списка
+            port_down = " UNKNOWN)-->" if port_down not in _speed.values() else f"{port_down})-->"
 
             connect = f'({switch_ports[0]}{port_up})-{switch_ports[1]}-({switch_ports[2]}{port_down}'
         else:
