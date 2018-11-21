@@ -374,7 +374,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def about():
         QtWidgets.QMessageBox.about(None,
                                     "О программе",
-                                    "Version 1.0.7\nPowered by Roman Fedorin")
+                                    "Version 1.1.0\nPowered by Roman Fedorin")
 
     @staticmethod
     def help():

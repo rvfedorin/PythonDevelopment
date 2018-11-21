@@ -1,3 +1,6 @@
+# ver 1.0.1
+# created by Roman Fedorin
+
 import paramiko
 import random
 
@@ -72,41 +75,33 @@ class CreateMobibox:
     def delete_l2tp_cl(self):
         errors = ""
 
-        if self.l2tp_client_mnemo and self.l2tp_client_pass and self.l2tp_client_ip and self.l2tp_ip:
-            l2tp_create_command = f'ppp sec add name="{self.l2tp_client_mnemo}" ' \
-                                  f'service=l2tp password="{self.l2tp_client_pass}" ' \
-                                  f'remote-address={self.l2tp_client_ip} ' \
-                                  f'local-address={self.l2tp_ip}'
+        if self.l2tp_client_mnemo:
+            l2tp_delet_command = f'ppp secret remove {self.l2tp_client_mnemo}'
+            eoip_delete_command = f'int eoip remove {self.l2tp_client_mnemo}'
 
-            eoip_create_command = f'/interface eoip add remote-address={self.l2tp_client_ip} ' \
-                                  f'tunnel-id={self.l2tp_client_vlan}  ' \
-                                  f'name={self.l2tp_client_mnemo} disabled=no !keepalive'
-
-            bridge_add_command = f'/interface bridge port add ' \
-                                 f'bridge=bridgeUnnumbered horizon=3 ' \
-                                 f'interface={self.l2tp_client_mnemo}'
+            # bridge_del_command = "?????"
 
             try:
                 mb_ssh = paramiko.SSHClient()
                 mb_ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 mb_ssh.connect(hostname=self.ip, username=self.login, password=self.passs, port=22)
 
-                stdin, stdout, stderr = mb_ssh.exec_command(l2tp_create_command)
+                stdin, stdout, stderr = mb_ssh.exec_command(l2tp_delet_command)
                 # print(stdout.read().decode())
                 _err = stderr.read().decode() + stdout.read().decode()
                 errors += f"\nError --- {_err}" if _err else ''
 
                 if not _err:
-                    stdin, stdout, stderr = mb_ssh.exec_command(eoip_create_command)
+                    stdin, stdout, stderr = mb_ssh.exec_command(eoip_delete_command)
                     # print(stdout.read().decode())
                     _err = stderr.read().decode() + stdout.read().decode()
                     errors += f"\nError --- {_err}" if _err else ''
 
-                if not _err:
-                    stdin, stdout, stderr = mb_ssh.exec_command(bridge_add_command)
-                    # print(stdout.read().decode())
-                    _err = stderr.read().decode() + stdout.read().decode()
-                    errors += f"\nError --- {_err}" if _err else ''
+                # if not _err:
+                #     stdin, stdout, stderr = mb_ssh.exec_command(bridge_del_command)
+                #     # print(stdout.read().decode())
+                #     _err = stderr.read().decode() + stdout.read().decode()
+                #     errors += f"\nError --- {_err}" if _err else ''
 
             except Exception as e:
                 errors += f"\nError --- {e}"

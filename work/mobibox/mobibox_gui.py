@@ -1,3 +1,6 @@
+# ver 1.0.1
+# created by Roman Fedorin
+
 from PyQt5 import QtWidgets, QtGui, QtCore
 from Cryptodome.Cipher import Blowfish
 import os
@@ -291,10 +294,14 @@ class MBContentWindow(QtWidgets.QWidget):
             taguntag = 'U' if self.check_tag.isChecked() else 'T'
             root_sw_other = None
 
-            data_from_DB = work_with_db.get_data_from_db(state_pref)
+            data_from_db = work_with_db.get_data_from_db(state_pref)
 
-            # 95.80.120.44X172.17.239.129X172.16.44.235X28
-            ip_mb_out, ip_mb_in, switch, sw_port = data_from_DB['Mobibox'].split('X')
+            try:  # 95.80.120.44X172.17.239.129X172.16.44.235X28
+                ip_mb_out, ip_mb_in, switch, sw_port = data_from_db['Mobibox'].split('X')
+            except Exception as e:
+                ip_mb_out, ip_mb_in, switch, sw_port = False
+                print("error in ip_mb_out, ip_mb_in, switch, sw_port = data_from_db['Mobibox'].split('X')")
+                print(e)
 
             _all_data_list = [
                 state_pref,
@@ -323,9 +330,9 @@ class MBContentWindow(QtWidgets.QWidget):
                 print("Идёт создание клиента на mobibox")
                 result_mb = mb.create_l2tp_cl()  # [True, return_command] or [False, errors]
                 if result_mb[0]:
-                    text += f"\nКлиент на mobibox создан.\n{result_mb[1]}\n"
+                    text += f"\nКлиент на mobibox создан.\n{result_mb[1]}\n\n"
                 else:
-                    text += f"\nОшибка создания на mobibox.\n{result_mb[1]}\n"
+                    text += f"\nОшибка создания на mobibox.\n{result_mb[1]}\n\n"
                 # ########### MB BLOCK END ################################################
 
                 res = create_vlan.create_vlan(_client, 'y', 'admin', self.p_sw)  # return [True, _message]
@@ -353,6 +360,20 @@ class MBContentWindow(QtWidgets.QWidget):
             elif self.rb_delete.isChecked():  # ###################### УДАЛЕНИЕ
                 self.parent.statusBar().showMessage("Идёт удаление клиента на свитчах")
                 res = del_vlan.del_code(clients=_client, correct_cl='y', passw=self.p_sw)  # return list
+
+                # ######## MB DELETE START################
+                mb = CreateMobibox(ip_mb_out, self.p_mb_sec)
+                mb.l2tp_client_mnemo = mnemo
+                # mb.l2tp_ip = ip_mb_in
+                # mb.l2tp_client_ip = ip_mb
+                # mb.l2tp_client_vlan = vl_number
+                print("Идёт удаление клиента на mobibox")
+                result_mb = mb.delete_l2tp_cl()  # [True, return_command] or [False, errors]
+                if result_mb[0]:
+                    text += f"\nКлиент на mobibox удалён.\n{result_mb[1]}\n\n"
+                else:
+                    text += f"\nОшибка удаления на mobibox.\n{result_mb[1]}\n\n"
+                # ######## MB DELETE END################
 
                 if len(res[1]) > 0 and res[0]:
                     text += f'\n{res[1]}'
