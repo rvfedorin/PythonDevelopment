@@ -2,7 +2,6 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 import os
 import shelve
-from Cryptodome.Cipher import Blowfish
 from functools import partial
 from multiprocessing import Pool, Manager
 from time import sleep
@@ -12,6 +11,7 @@ from tools import work_with_db, customers
 from cisco import cisco_class
 from switches import switch, create_vlan, del_vlan
 from intranet import full_path_to_sw, tools, all_neighbor
+from dectypt import DecryptPass
 
 from mobibox import mobibox_gui
 
@@ -673,7 +673,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._thread.start()
 
 
-class OpticContentWindow(QtWidgets.QWidget):
+class OpticContentWindow(QtWidgets.QWidget, DecryptPass):
     def __init__(self, parent=None, ico=None):
         super().__init__(parent=parent)
         self.setWindowTitle("Работа с клиентами на оптике.")
@@ -685,11 +685,6 @@ class OpticContentWindow(QtWidgets.QWidget):
         self.all_fields_full = 0
         self.city = work_with_db.get_list_cities()  # Словарь горд:ключ
         self.city_pref = {v: k for k, v in self.city.items()}  # Словарь ключ:город
-        self.key_pass = None
-        self.p_un_sup = None
-        self.p_sw = None
-        self.my_key = None
-        self.my_key_e = None
 
         self.init_ui()
 
@@ -813,22 +808,7 @@ class OpticContentWindow(QtWidgets.QWidget):
 
         # self.show()
 
-    def decrypt_pass(self):
-        if self.key_pass:
-            try:
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_un_sup = cipher.decrypt(settings.p_un_sup).decode().split('1111')[0]
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_sw = cipher.decrypt(settings.p_sw).decode().split('1111')[0]
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.my_key = cipher.decrypt(settings.my_key).decode().split('1111')[0]
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.my_key_e = cipher.decrypt(settings.my_key_e).decode().split('1111')[0]
-            except Exception as e:
-                print(f"Error while encoded passwords. {e}")
-                self.key_pass = None
-            finally:
-                return True
+
 
     def disable_button(self):
         """ Функция включает/отключает кнопки в зависимости от заполнения полей """
@@ -1068,7 +1048,7 @@ class OpticContentWindow(QtWidgets.QWidget):
                                               text)
 
 
-class RwrContentWindow(QtWidgets.QWidget):
+class RwrContentWindow(QtWidgets.QWidget, DecryptPass):
     def __init__(self, parent=None, ico=None):
         super().__init__(parent=parent)
         self.setWindowTitle("Работа с клиентами на секторах.")
@@ -1080,13 +1060,6 @@ class RwrContentWindow(QtWidgets.QWidget):
         self.all_fields_full = 0
         self.city = work_with_db.get_list_cities()  # Словарь горд:ключ
         self.city_pref = {v: k for k, v in self.city.items()}  # Словарь префикс:город
-        self.key_pass = None
-        self.p_un_sup = None
-        self.p_sw = None
-        self.p_rwr_cl = None
-        self.p_rwr_sec = None
-        self.my_key = None
-        self.my_key_e = None
 
         self.init_ui()
 
@@ -1203,27 +1176,6 @@ class RwrContentWindow(QtWidgets.QWidget):
         self.but_speed_edit.clicked.connect(self.edit_speed_file)
 
         # self.show()
-
-    def decrypt_pass(self):
-        if self.key_pass:
-            try:
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_un_sup = cipher.decrypt(settings.p_un_sup).decode().split('1111')[0]
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_sw = cipher.decrypt(settings.p_sw).decode().split('1111')[0]
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_rwr_cl = cipher.decrypt(settings.p_rwr_cl).decode().split('1111')[0]
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_rwr_sec = cipher.decrypt(settings.p_rwr_sec).decode().split('1111')[0]
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.my_key = cipher.decrypt(settings.my_key).decode().split('1111')[0]
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.my_key_e = cipher.decrypt(settings.my_key_e).decode().split('1111')[0]
-            except Exception as e:
-                print(f"Error while encoded passwords. {e}")
-                self.key_pass = None
-            finally:
-                return True
 
     def disable_button(self):
         """ Функция включает/отключает кнопки в зависимости от заполнения полей """
@@ -1452,11 +1404,8 @@ if __name__ == "__main__":
     get_pass = dialog_pass.exec()
     if get_pass == QtWidgets.QDialog.Accepted:
         _key = dialog_pass.textValue()
-        main_window.window_optic.key_pass = _key
-        main_window.window_optic.decrypt_pass()
-
-        main_window.window_mb.key_pass = _key
-        main_window.window_mb.decrypt_pass()
+        DecryptPass.key_pass = _key
+        DecryptPass.decrypt_pass()
 
     main_window.show()
 

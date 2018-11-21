@@ -2,7 +2,6 @@
 # created by Roman Fedorin
 
 from PyQt5 import QtWidgets, QtGui, QtCore
-from Cryptodome.Cipher import Blowfish
 import os
 
 import settings
@@ -10,9 +9,10 @@ from tools import work_with_db, customers
 from cisco import cisco_class
 from switches import create_vlan, del_vlan
 from mobibox.mobibox_class import CreateMobibox
+from dectypt import DecryptPass
 
 
-class MBContentWindow(QtWidgets.QWidget):
+class MBContentWindow(QtWidgets.QWidget, DecryptPass):
     def __init__(self, parent=None, ico=None):
         super().__init__(parent=parent)
         self.setWindowTitle("Работа с клиентами на Mobibox.")
@@ -24,12 +24,6 @@ class MBContentWindow(QtWidgets.QWidget):
         self.all_fields_full = 0
         self.city = work_with_db.get_list_cities()  # Словарь горд:ключ
         self.city_pref = {v: k for k, v in self.city.items()}  # Словарь префикс:город
-        self.key_pass = None
-        self.p_un_sup = None
-        self.p_sw = None
-        self.p_mb_sec = None
-        self.my_key = None
-        self.my_key_e = None
 
         self.init_ui()
 
@@ -146,29 +140,6 @@ class MBContentWindow(QtWidgets.QWidget):
         self.but_speed_edit.clicked.connect(self.edit_speed_file)
 
         # self.show()
-
-    def decrypt_pass(self):
-        if self.key_pass:
-            try:
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_un_sup = cipher.decrypt(settings.p_un_sup).decode().split('1111')[0]
-
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_sw = cipher.decrypt(settings.p_sw).decode().split('1111')[0]
-
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_mb_sec = cipher.decrypt(settings.p_mb_sec).decode().split('1111')[0]
-
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.my_key = cipher.decrypt(settings.my_key).decode().split('1111')[0]
-
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.my_key_e = cipher.decrypt(settings.my_key_e).decode().split('1111')[0]
-            except Exception as e:
-                print(f"Error while encoded passwords. {e}")
-                self.key_pass = None
-            finally:
-                return True
 
     def disable_button(self):
         """ Функция включает/отключает кнопки в зависимости от заполнения полей """
