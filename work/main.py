@@ -1438,9 +1438,6 @@ class RwrContentWindow(QtWidgets.QWidget):
                                               text)
 
 
-
-
-
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     ico = QtGui.QIcon(settings.ico)
@@ -1454,8 +1451,12 @@ if __name__ == "__main__":
     dialog_pass.setTextEchoMode(QtWidgets.QLineEdit.Password)
     get_pass = dialog_pass.exec()
     if get_pass == QtWidgets.QDialog.Accepted:
-        main_window.window_optic.key_pass = dialog_pass.textValue()
+        _key = dialog_pass.textValue()
+        main_window.window_optic.key_pass = _key
         main_window.window_optic.decrypt_pass()
+
+        main_window.window_mb.key_pass = _key
+        main_window.window_mb.decrypt_pass()
 
     main_window.show()
 

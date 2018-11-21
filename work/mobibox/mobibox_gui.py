@@ -143,6 +143,7 @@ class MBContentWindow(QtWidgets.QWidget):
 
         # self.show()
 
+
     def decrypt_pass(self):
         if self.key_pass:
             try:
@@ -274,7 +275,7 @@ class MBContentWindow(QtWidgets.QWidget):
                 try:
                     _cisco = cisco_class.CiscoCreate(self.my_key, self.my_key_e, self.p_un_sup, self.city[_city])
                 except Exception as e:
-                    text = f"Ошибка создания объекта cisco.\n main.py:ContentWindow:run_b\n{e}"
+                    text = f"Ошибка создания объекта cisco.\n mobibox_gui:run_b\n{e}"
                     print(text)
                     QtWidgets.QMessageBox.information(None,
                                                       "Выполнение",
