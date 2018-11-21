@@ -56,12 +56,17 @@ def get_list_cities():
 
 if __name__ == '__main__':
 
-    # city_shelve = settings.city_shelve
-    # with shelve.open(city_shelve) as db:
-    #     for i in db:
-    #         print(f'{i} => {db[i]}')
-    print(os.path.abspath(os.getcwd() + f'../{settings.city_shelve}'))
-    print(get_list_cities())
+    city_shelve = os.path.abspath(settings.city_shelve).replace('\\tools', '')
+
+    with shelve.open(city_shelve) as db:
+        for i in db:
+            print(f'{i} => {db[i]}')
+            # temp = db[i]
+            # temp['Mobibox'] = 'None'
+            # db[i] = temp
+
+    # print(os.path.abspath(os.getcwd() + f'../{settings.city_shelve}'))
+    # print(get_list_cities())
 
 
 

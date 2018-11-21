@@ -106,6 +106,7 @@ class DelMulVlanThread(QtCore.QThread):
 class WorkWithDB(QtWidgets.QWidget):
     def __init__(self, window, parent=None):
         super().__init__(parent, QtCore.Qt.Window)
+        self.setMinimumWidth(450)
         ico = QtGui.QIcon(settings.ico)
         self.setWindowIcon(ico)
         self.setWindowTitle("Работа с базой данных.")
@@ -130,6 +131,7 @@ class WorkWithDB(QtWidgets.QWidget):
         self.root_port_entry = QtWidgets.QLineEdit()
         self.col_sw_entry = QtWidgets.QLineEdit()
         self.unix_entry = QtWidgets.QLineEdit()
+        self.mobi_entry = QtWidgets.QLineEdit()
 
         # START GROUP BOX
         self.rb_create = QtWidgets.QRadioButton("Создать")
@@ -163,6 +165,7 @@ class WorkWithDB(QtWidgets.QWidget):
         self.form.addRow("Порт подключения cisco: ", self.root_port_entry)
         self.form.addRow("Колонка с IP свитчей: ", self.col_sw_entry)
         self.form.addRow("Unix: ", self.unix_entry)
+        self.form.addRow("Mobibox: ", self.mobi_entry)
         self.form.addRow(self.group_box_radio)
         self.form.addRow(self.but_run, self.but_quit)
 
@@ -179,6 +182,7 @@ class WorkWithDB(QtWidgets.QWidget):
                 self.root_port_entry.setText(res['root_port'])
                 self.col_sw_entry.setText(str(res['col_sw']))
                 self.unix_entry.setText(res['unix'])
+                self.mobi_entry.setText(res['Mobibox'])
         else:
             text = 'Вам необходимо указать префикс или выбрать город из списка.'
             QtWidgets.QMessageBox.information(None,
@@ -191,7 +195,8 @@ class WorkWithDB(QtWidgets.QWidget):
                      and self.root_sw_entry.text()
                      and self.root_port_entry.text()
                      and self.col_sw_entry.text()
-                     and self.unix_entry.text())
+                     and self.unix_entry.text()
+                     and self.mobi_entry.text())
 
         if all_field:
             if self.rb_create.isChecked():  # Создание записи
@@ -207,9 +212,16 @@ class WorkWithDB(QtWidgets.QWidget):
                     _port = self.root_port_entry.text()
                     _col = self.col_sw_entry.text()
                     _unix = self.unix_entry.text()
+                    _mobi = self.mobi_entry.text()
 
                     try:
-                        _dict = {'city': _city, 'root_sw': _sw, 'root_port': _port, 'col_sw': _col, 'unix': _unix}
+                        _dict = {'city': _city,
+                                 'root_sw': _sw,
+                                 'root_port': _port,
+                                 'col_sw': _col,
+                                 'unix': _unix,
+                                 'Mobibox': _mobi}
+
                         city_shelve = settings.city_shelve
                         with shelve.open(city_shelve) as db:
                             work_with_db.add_to_db(db, _key, _dict)
@@ -239,8 +251,14 @@ class WorkWithDB(QtWidgets.QWidget):
                 _port = self.root_port_entry.text()
                 _col = self.col_sw_entry.text()
                 _unix = self.unix_entry.text()
+                _mobi = self.mobi_entry.text()
 
-                _dict = {'city': _city, 'root_sw': _sw, 'root_port': _port, 'col_sw': _col, 'unix': _unix}
+                _dict = {'city': _city,
+                         'root_sw': _sw,
+                         'root_port': _port,
+                         'col_sw': _col,
+                         'unix': _unix,
+                         'Mobibox': _mobi}
                 try:
                     city_shelve = settings.city_shelve
                     print(_dict)

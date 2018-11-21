@@ -5,7 +5,7 @@ import os
 import settings
 from tools import work_with_db, customers
 from cisco import cisco_class
-from switches import switch, create_vlan, del_vlan
+from switches import create_vlan, del_vlan
 
 
 class MBContentWindow(QtWidgets.QWidget):
@@ -23,8 +23,7 @@ class MBContentWindow(QtWidgets.QWidget):
         self.key_pass = None
         self.p_un_sup = None
         self.p_sw = None
-        self.p_rwr_cl = None
-        self.p_rwr_sec = None
+        self.p_mb_sec = None
         self.my_key = None
         self.my_key_e = None
 
@@ -149,14 +148,16 @@ class MBContentWindow(QtWidgets.QWidget):
             try:
                 cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
                 self.p_un_sup = cipher.decrypt(settings.p_un_sup).decode().split('1111')[0]
+
                 cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
                 self.p_sw = cipher.decrypt(settings.p_sw).decode().split('1111')[0]
+
                 cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_rwr_cl = cipher.decrypt(settings.p_rwr_cl).decode().split('1111')[0]
-                cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_rwr_sec = cipher.decrypt(settings.p_rwr_sec).decode().split('1111')[0]
+                self.p_mb_sec = cipher.decrypt(settings.p_rwr_sec).decode().split('1111')[0]
+
                 cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
                 self.my_key = cipher.decrypt(settings.my_key).decode().split('1111')[0]
+
                 cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
                 self.my_key_e = cipher.decrypt(settings.my_key_e).decode().split('1111')[0]
             except Exception as e:
@@ -306,10 +307,10 @@ class MBContentWindow(QtWidgets.QWidget):
 
             # Блок выбора действия
             if self.rb_create.isChecked():  #
-                print("Идёт создание клиента на rwr и свитчах")
+                print("Идёт создание клиента на свитчах")
                 self.parent.statusBar().showMessage("Идёт создание клиента на rwr и свитчах")
-                # ########### RWR BLOCK START ############
-                # ########### RWR BLOCK END ############
+                # ########### MB BLOCK START ############
+                # ########### MB BLOCK END ############
                 res = create_vlan.create_vlan(_client, 'y', 'admin', self.p_sw)  # return [True, _message]
 
                 if len(res[1]) > 0 and res[0]:
