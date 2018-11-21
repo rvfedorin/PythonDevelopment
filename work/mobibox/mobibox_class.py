@@ -69,6 +69,56 @@ class CreateMobibox:
         else:
             return [False, errors]
 
+    def delete_l2tp_cl(self):
+        errors = ""
+
+        if self.l2tp_client_mnemo and self.l2tp_client_pass and self.l2tp_client_ip and self.l2tp_ip:
+            l2tp_create_command = f'ppp sec add name="{self.l2tp_client_mnemo}" ' \
+                                  f'service=l2tp password="{self.l2tp_client_pass}" ' \
+                                  f'remote-address={self.l2tp_client_ip} ' \
+                                  f'local-address={self.l2tp_ip}'
+
+            eoip_create_command = f'/interface eoip add remote-address={self.l2tp_client_ip} ' \
+                                  f'tunnel-id={self.l2tp_client_vlan}  ' \
+                                  f'name={self.l2tp_client_mnemo} disabled=no !keepalive'
+
+            bridge_add_command = f'/interface bridge port add ' \
+                                 f'bridge=bridgeUnnumbered horizon=3 ' \
+                                 f'interface={self.l2tp_client_mnemo}'
+
+            try:
+                mb_ssh = paramiko.SSHClient()
+                mb_ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                mb_ssh.connect(hostname=self.ip, username=self.login, password=self.passs, port=22)
+
+                stdin, stdout, stderr = mb_ssh.exec_command(l2tp_create_command)
+                # print(stdout.read().decode())
+                _err = stderr.read().decode() + stdout.read().decode()
+                errors += f"\nError --- {_err}" if _err else ''
+
+                if not _err:
+                    stdin, stdout, stderr = mb_ssh.exec_command(eoip_create_command)
+                    # print(stdout.read().decode())
+                    _err = stderr.read().decode() + stdout.read().decode()
+                    errors += f"\nError --- {_err}" if _err else ''
+
+                if not _err:
+                    stdin, stdout, stderr = mb_ssh.exec_command(bridge_add_command)
+                    # print(stdout.read().decode())
+                    _err = stderr.read().decode() + stdout.read().decode()
+                    errors += f"\nError --- {_err}" if _err else ''
+
+            except Exception as e:
+                errors += f"\nError --- {e}"
+                print(f"Ошибка {e}")
+        else:
+            errors += f"\nFilled not all fill!"
+
+        if not errors:
+            return [True, f"Клиент {self.l2tp_client_mnemo} на МБ удален."]
+        else:
+            return [False, errors]
+
     @staticmethod
     def gen_pass(num=12):
         abc = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"

@@ -6,6 +6,7 @@ import settings
 from tools import work_with_db, customers
 from cisco import cisco_class
 from switches import create_vlan, del_vlan
+from mobibox.mobibox_class import CreateMobibox
 
 
 class MBContentWindow(QtWidgets.QWidget):
@@ -42,7 +43,7 @@ class MBContentWindow(QtWidgets.QWidget):
         self.edit_vlan = QtWidgets.QLineEdit()
         self.edit_vlan.setValidator(QtGui.QIntValidator())
 
-        self.edit_iprwr = QtWidgets.QLineEdit()
+        self.edit_ip_mb = QtWidgets.QLineEdit()
         #  валидатор IProotIP
         str_ip = '^((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])' \
                  '(\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])){3})' \
@@ -50,7 +51,7 @@ class MBContentWindow(QtWidgets.QWidget):
                  '((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])' \
                  '(\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[0-9]{2}|[0-9])){3})$;'
         self.regexp_ip = QtCore.QRegExp(str_ip)
-        self.edit_iprwr.setValidator(QtGui.QRegExpValidator(self.regexp_ip))
+        self.edit_ip_mb.setValidator(QtGui.QRegExpValidator(self.regexp_ip))
 
         self.edit_port = QtWidgets.QComboBox()
         self.edit_port.addItems(["ether1", "ether2"])
@@ -89,7 +90,7 @@ class MBContentWindow(QtWidgets.QWidget):
         self.grid_entry.addWidget(self.but_free_vlan, 2, 2)
 
         self.grid_entry.addWidget(label_ipsw, 3, 0)
-        self.grid_entry.addWidget(self.edit_iprwr, 3, 1)
+        self.grid_entry.addWidget(self.edit_ip_mb, 3, 1)
 
         self.grid_entry.addWidget(label_port, 4, 0)
         self.grid_entry.addWidget(self.edit_port, 4, 1)
@@ -132,7 +133,7 @@ class MBContentWindow(QtWidgets.QWidget):
         self.edit_mnem.textChanged.connect(self.disable_button)
         self.edit_mnem.textChanged.connect(self.on_city)
         self.edit_vlan.textChanged.connect(self.disable_button)
-        self.edit_iprwr.textChanged.connect(self.disable_button)
+        self.edit_ip_mb.textChanged.connect(self.disable_button)
 
         self.rb_create.clicked.connect(self.disable_entry)
         self.rb_delete.clicked.connect(self.disable_entry)
@@ -142,7 +143,6 @@ class MBContentWindow(QtWidgets.QWidget):
         self.but_speed_edit.clicked.connect(self.edit_speed_file)
 
         # self.show()
-
 
     def decrypt_pass(self):
         if self.key_pass:
@@ -154,7 +154,7 @@ class MBContentWindow(QtWidgets.QWidget):
                 self.p_sw = cipher.decrypt(settings.p_sw).decode().split('1111')[0]
 
                 cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
-                self.p_mb_sec = cipher.decrypt(settings.p_rwr_sec).decode().split('1111')[0]
+                self.p_mb_sec = cipher.decrypt(settings.p_mb_sec).decode().split('1111')[0]
 
                 cipher = Blowfish.new(self.key_pass.encode(), Blowfish.MODE_CBC, settings.iv)
                 self.my_key = cipher.decrypt(settings.my_key).decode().split('1111')[0]
@@ -171,7 +171,7 @@ class MBContentWindow(QtWidgets.QWidget):
         """ Функция включает/отключает кнопки в зависимости от заполнения полей """
         _chek = (len(self.edit_mnem.text())
                  and len(self.edit_vlan.text())
-                 and len(self.edit_iprwr.text()))
+                 and len(self.edit_ip_mb.text()))
 
         # Отключаем кнопку "Выполнить", если не заполнены все поля
         if _chek:
@@ -193,10 +193,10 @@ class MBContentWindow(QtWidgets.QWidget):
             if self.edit_mnem.text() == 'All in file':  # если переходим со вкладки смены скорости
                 self.edit_mnem.setText('')
                 self.edit_vlan.setText('')
-                self.edit_iprwr.setText('')
+                self.edit_ip_mb.setText('')
                 self.edit_mnem.setDisabled(False)
                 self.edit_vlan.setDisabled(False)
-                self.edit_iprwr.setDisabled(False)
+                self.edit_ip_mb.setDisabled(False)
                 self.but_speed_edit.setVisible(False)
                 self.check_cisco.setVisible(True)
             self.check_cisco.setText("Создать на Cisco")
@@ -207,10 +207,10 @@ class MBContentWindow(QtWidgets.QWidget):
             if self.edit_mnem.text() == 'All in file':  # если переходим со вкладки смены скорости
                 self.edit_mnem.setText('')
                 self.edit_vlan.setText('')
-                self.edit_iprwr.setText('')
+                self.edit_ip_mb.setText('')
                 self.edit_mnem.setDisabled(False)
                 self.edit_vlan.setDisabled(False)
-                self.edit_iprwr.setDisabled(False)
+                self.edit_ip_mb.setDisabled(False)
                 self.check_tag.setDisabled(False)
                 self.but_speed_edit.setVisible(False)
                 self.check_cisco.setVisible(True)
@@ -222,11 +222,11 @@ class MBContentWindow(QtWidgets.QWidget):
         elif self.rb_speed.isChecked():
             self.edit_mnem.setText('All in file')
             self.edit_vlan.setText('4096')
-            self.edit_iprwr.setText('255.255.255.255')
+            self.edit_ip_mb.setText('255.255.255.255')
 
             self.edit_mnem.setDisabled(True)
             self.edit_vlan.setDisabled(True)
-            self.edit_iprwr.setDisabled(True)
+            self.edit_ip_mb.setDisabled(True)
             self.edit_port.setDisabled(True)
             self.check_tag.setDisabled(True)
 
@@ -286,21 +286,23 @@ class MBContentWindow(QtWidgets.QWidget):
             state_pref = self.city[_city]
             mnemo = self.edit_mnem.text()
             vl_number = self.edit_vlan.text()
-            switch = self.edit_iprwr.text()
+            ip_mb = self.edit_ip_mb.text()
             port = self.edit_port.currentText()
             taguntag = 'U' if self.check_tag.isChecked() else 'T'
             root_sw_other = None
 
-            if 'root' in switch:  # если надо сделать другой свитч корневым
-                switch, root_sw_other = switch.split('root')
+            data_from_DB = work_with_db.get_data_from_db(state_pref)
+
+            # 95.80.120.44X172.17.239.129X172.16.44.235X28
+            ip_mb_out, ip_mb_in, switch, sw_port = data_from_DB['Mobibox'].split('X')
 
             _all_data_list = [
                 state_pref,
                 mnemo,
                 vl_number,
                 switch,
-                port,
-                taguntag,
+                sw_port,
+                'T',
             ]
 
             print(f'Creating instance client {mnemo}... ')
@@ -309,9 +311,23 @@ class MBContentWindow(QtWidgets.QWidget):
             # Блок выбора действия
             if self.rb_create.isChecked():  #
                 print("Идёт создание клиента на свитчах")
-                self.parent.statusBar().showMessage("Идёт создание клиента на rwr и свитчах")
-                # ########### MB BLOCK START ############
-                # ########### MB BLOCK END ############
+                print(ip_mb_out, ip_mb_in, switch, sw_port)
+                self.parent.statusBar().showMessage("Идёт создание клиента на mobibox и свитчах")
+
+                # ########### MB BLOCK START ################################################
+                mb = CreateMobibox(ip_mb_out, self.p_mb_sec)
+                mb.l2tp_client_mnemo = mnemo
+                mb.l2tp_ip = ip_mb_in
+                mb.l2tp_client_ip = ip_mb
+                mb.l2tp_client_vlan = vl_number
+                print("Идёт создание клиента на mobibox")
+                result_mb = mb.create_l2tp_cl()  # [True, return_command] or [False, errors]
+                if result_mb[0]:
+                    text += f"\nКлиент на mobibox создан.\n{result_mb[1]}\n"
+                else:
+                    text += f"\nОшибка создания на mobibox.\n{result_mb[1]}\n"
+                # ########### MB BLOCK END ################################################
+
                 res = create_vlan.create_vlan(_client, 'y', 'admin', self.p_sw)  # return [True, _message]
 
                 if len(res[1]) > 0 and res[0]:
@@ -345,7 +361,7 @@ class MBContentWindow(QtWidgets.QWidget):
 
                 if _cisco_created:  # если создан объект циски
                     self.parent.statusBar().showMessage("Идёт удаление клиента на cisco")
-                    result_delete = _cisco.delete_from_cisco([_client])  # [False, clients_not_found] or if allgood [log]
+                    result_delete = _cisco.delete_from_cisco([_client])  # [False, clients_not_found] or [log]
                     if result_delete[0]:
                         text += "\nКлиент на cisco удалён.\n"
                     else:
