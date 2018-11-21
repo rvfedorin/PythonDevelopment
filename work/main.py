@@ -13,6 +13,8 @@ from cisco import cisco_class
 from switches import switch, create_vlan, del_vlan
 from intranet import full_path_to_sw, tools, all_neighbor
 
+from mobibox import mobibox_gui
+
 
 def get_list_cities():
     """ Function reads all keys of cities from shelveDB """
@@ -310,6 +312,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("Работа с клиентами.")
         self.window_optic = OpticContentWindow(self)
         self.window_rwr = RwrContentWindow(self)
+        self.window_mb = mobibox_gui.MBContentWindow(self)
         self.content_tab = QtWidgets.QTabWidget()
         self.action = True
         self.init_ui()
@@ -320,6 +323,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # self.setCentralWidget(self.window)
         self.content_tab.addTab(self.window_optic, "&Optic")
+        self.content_tab.addTab(self.window_mb, "&Mobibox")
         self.content_tab.addTab(self.window_rwr, "&Rwr")
         self.setCentralWidget(self.content_tab)
 
@@ -1414,6 +1418,8 @@ class RwrContentWindow(QtWidgets.QWidget):
             QtWidgets.QMessageBox.information(None,
                                               "Выполнение",
                                               text)
+
+
 
 
 
