@@ -29,7 +29,7 @@ def get_list_cities():
 class PathSwThread(QtCore.QThread):
     mysignal = QtCore.pyqtSignal(str)
 
-    def __init__(self, ended_switch, column_ip, root_port, root_sw, city, p_sw):
+    def __init__(self, ended_switch, column_ip, root_port, root_sw, city, only_path, p_sw):
         super(PathSwThread, self).__init__()
         self.ended_switch = ended_switch
         self.column_ip = column_ip
@@ -37,6 +37,7 @@ class PathSwThread(QtCore.QThread):
         self.root_sw = root_sw
         self.city = city
         self.p_sw = p_sw
+        self.only_path = only_path
 
     def run(self):
         try:
@@ -50,13 +51,16 @@ class PathSwThread(QtCore.QThread):
         else:
             if _path_to_sw[0]:
                 try:
-                    _path_with_links = full_path_to_sw.type_connection(_path_to_sw[1], _passw=self.p_sw)
+                    if not self.only_path:
+                        _path_with_links = full_path_to_sw.type_connection(_path_to_sw[1], _passw=self.p_sw)
+                        _path_to_sw = _path_with_links
+
                 except Exception as e:
                     self.mysignal.emit(
                         f"Путь до свитча {self.ended_switch}XXXОшибка подключения: {e}\nПуть:{_path_to_sw}")
                     print(e)
                 else:
-                    self.mysignal.emit(f"Путь до свитча {self.ended_switch}XXX{_path_with_links[1]}")
+                    self.mysignal.emit(f"Путь до свитча {self.ended_switch}XXX{_path_to_sw[1]}")
 
 
 class CreateMulVlanThread(QtCore.QThread):
@@ -374,7 +378,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def about():
         QtWidgets.QMessageBox.about(None,
                                     "О программе",
-                                    "Version 1.1.0\nPowered by Roman Fedorin")
+                                    "Version 1.1.1\nPowered by Roman Fedorin")
 
     @staticmethod
     def help():
@@ -402,6 +406,7 @@ class MainWindow(QtWidgets.QMainWindow):
         _city_list.setCurrentText(self.window_optic.city_list.currentText())
         _sw_ent = QtWidgets.QLineEdit()
         _sw_ent.setValidator(QtGui.QRegExpValidator(self.window_optic.regexp_ip))
+        _check_only_path = QtWidgets.QCheckBox("Показать путь без линков.")
 
         _but_ok = QtWidgets.QPushButton("Ok")
         _but_ok.clicked.connect(_win.accept)
@@ -410,6 +415,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         _form.addRow(_city_list)
         _form.addRow("IP свитча: ", _sw_ent)
+        _form.addRow(_check_only_path)
         _form.addRow(_but_ok, _but_cancel)
 
         _win.setLayout(_form)
@@ -432,6 +438,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 city = str(city_db['city']).strip()
                 root_port = str(city_db['root_port']).strip()
                 root_sw = str(city_db['root_sw']).strip()
+                only_path = _check_only_path.isChecked()
 
                 # Пробуем получить данные из интранета
                 try:
@@ -439,7 +446,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 except Exception as e:
                     print(f"Ошибка поиска в интранете. {e}")
                 else:
-                    self._thread = PathSwThread(ended_switch, column_ip, root_port, root_sw, city, self.window_optic.p_sw)
+                    self._thread = PathSwThread(ended_switch,
+                                                column_ip,
+                                                root_port,
+                                                root_sw,
+                                                city,
+                                                only_path,
+                                                self.window_optic.p_sw)
                     self._thread.mysignal.connect(self.message_out)
                     self._thread.start()
 
