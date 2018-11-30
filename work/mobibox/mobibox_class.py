@@ -115,7 +115,7 @@ class CreateMobibox:
             return [False, errors]
 
     @staticmethod
-    def gen_pass(num=12):
+    def gen_pass(num=16):
         abc = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
         new_pass = ''
 
@@ -134,4 +134,4 @@ if __name__ == '__main__':
     mb.l2tp_client_vlan = "12312"
 
     print(mb.gen_pass())
-    print(mb.create_l2tp_cl()[1])
+    # print(mb.create_l2tp_cl()[1])

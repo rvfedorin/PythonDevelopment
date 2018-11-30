@@ -1,4 +1,7 @@
 If you need specify the root switch manualy:
 'X.X.X.XrootX.X.X.X' where X.X.X.X after word 'root' is the root switch
 
+Mobibox is added in DB as "95.80.120.13X172.17.239.129X172.16.44.235X28" where:
+"IP of central mikrot X IP Gw for clients net X Switch for unnumbered port X unnubered port on switch"
+
 If you specify 'free' instead the numbor of ports - app will find free port
