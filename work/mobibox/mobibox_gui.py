@@ -258,7 +258,7 @@ class MBContentWindow(QtWidgets.QWidget, DecryptPass):
                     _cisco_created = True
 
             state_pref = self.city[_city]
-            mnemo = self.edit_mnem.text()
+            mnemo = self.edit_mnem.text().strip()
             vl_number = self.edit_vlan.text()
             ip_mb = self.edit_ip_mb.text()
             port = self.edit_port.currentText()

@@ -378,7 +378,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def about():
         QtWidgets.QMessageBox.about(None,
                                     "О программе",
-                                    "Version 1.1.1\nPowered by Roman Fedorin")
+                                    "Version 1.1.2\nPowered by Roman Fedorin")
 
     @staticmethod
     def help():
@@ -967,7 +967,7 @@ class OpticContentWindow(QtWidgets.QWidget, DecryptPass):
                     _cisco_created = True
 
             state_pref = self.city[_city]
-            mnemo = self.edit_mnem.text()
+            mnemo = self.edit_mnem.text().strip()
             vl_number = self.edit_vlan.text()
             switch = self.edit_ipsw.text()
             port = self.edit_port.text()
@@ -1307,7 +1307,7 @@ class RwrContentWindow(QtWidgets.QWidget, DecryptPass):
                     _cisco_created = True
 
             state_pref = self.city[_city]
-            mnemo = self.edit_mnem.text()
+            mnemo = self.edit_mnem.text().strip()
             vl_number = self.edit_vlan.text()
             switch = self.edit_iprwr.text()
             port = self.edit_port.currentText()

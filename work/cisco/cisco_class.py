@@ -1,4 +1,4 @@
-# ver 1.0.1
+# ver 1.0.2
 # created by Roman Fedorin
 
 import telnetlib
@@ -389,6 +389,7 @@ class CiscoCreate:
 
     # ФУНКЦИИ СМЕНЫ СКОРОСТЕЙ
     def get_speed(self, int_data):
+        print(f"Get DATA {int_data}")
         b = None
         _type = None
         for a in int_data:
@@ -405,8 +406,8 @@ class CiscoCreate:
             if b is None:
                 continue
 
-            current_speed = b.group(0).split()
-            return current_speed[2], _type
+        current_speed = b.group(0).split()[2] if b is not None else None
+        return current_speed, _type
 
     @staticmethod
     def change_speed_type_service(tn, current_speed, new_speed, ip_client, interface_cl):
