@@ -1,6 +1,6 @@
 # Created by Fedorint Roman
 # Script create switch
-# ver 1.0.0
+# ver 1.0.1
 
 from telnetlib import Telnet
 from socket import timeout
@@ -47,7 +47,7 @@ class NewSwitch:
     def connect(self):
         model = self.get_model_sw(self.ip)
         if model == 'DES-2108':
-            message = f'{sw} is DES-2108  \n ERROR \n'
+            message = f'{self.ip} is DES-2108  \n ERROR \n'
             return [False, message]
 
         try:
