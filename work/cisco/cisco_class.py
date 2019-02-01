@@ -1,4 +1,4 @@
-# ver 1.0.2
+# ver 1.0.5
 # created by Roman Fedorin
 
 import telnetlib
@@ -411,6 +411,7 @@ class CiscoCreate:
 
     @staticmethod
     def change_speed_type_service(tn, current_speed, new_speed, ip_client, interface_cl):
+        temp = ""
         print("=" * 100)
         print("=" * 100)
         print(f"{ip_client}----------------------")
@@ -418,16 +419,37 @@ class CiscoCreate:
         print("=" * 100)
 
         print((tn.read_until(b"#", timeout=2)).decode())
-        tn.write(f"no service-policy input {current_speed} \r".encode())
-        print((tn.read_until(b"#", timeout=2)).decode())
-        tn.write(f"no service-policy output {current_speed} \r".encode())
-        print((tn.read_until(b"#", timeout=2)).decode())
         tn.write(f"service-policy input {new_speed} \r".encode())
+        temp = (tn.read_until(b"#", timeout=2)).decode()
+
+        if "not configured" in temp:
+            return "error" + temp
+
+
         print((tn.read_until(b"#", timeout=2)).decode())
+        tn.write(f"no service-policy input {current_speed} \r".encode())
+        temp = (tn.read_until(b"#", timeout=2)).decode()
+        print(temp)
+
+        tn.write(f"no service-policy output {current_speed} \r".encode())
+        temp = (tn.read_until(b"#", timeout=2)).decode()
+        print(temp)
+
+        tn.write(f"service-policy input {new_speed} \r".encode())
+        temp = (tn.read_until(b"#", timeout=2)).decode()
+        print(temp)
+
         tn.write(f"service-policy output {new_speed} \r".encode())
-        print((tn.read_until(b"#", timeout=2)).decode())
+        temp = (tn.read_until(b"#", timeout=2)).decode()
+        print(temp)
+
         tn.write(b"end \r")
-        print((tn.read_until(b"#", timeout=2)).decode())
+        temp = (tn.read_until(b"#", timeout=2)).decode()
+        print(temp)
+
+
+        return "success"
+
 
     @staticmethod
     def change_speed_type_rate(tn, current_speed, new_speed, ip_client, interface_cl):
@@ -455,6 +477,7 @@ class CiscoCreate:
         print((tn.read_until(b"#", timeout=2)).decode())
 
     def change_speed(self):
+        responce = ""
         ip_client = None
         filename = os.path.abspath(os.getcwd() + f"{settings.data_path}cl_to_change_speed.txt")
 
@@ -545,11 +568,20 @@ class CiscoCreate:
                     current_speed, current_type = self.get_speed(int_data)
 
                     if current_type == 'service':
-                        self.change_speed_type_service(tn, current_speed, new_speed, ip_client, interface_cl)
+                        responce = self.change_speed_type_service(tn, current_speed, new_speed, ip_client, interface_cl)
                     elif current_type == 'rate':
                         self.change_speed_type_rate(tn, current_speed, new_speed, ip_client, interface_cl)
 
+                    if "error" in responce:
+                        print("="*40)
+                        print(f'Error: {client_ip_speed} ')
+                        print(f'Error: {responce} ')
+                        print("="*40)
+                        clients_not_found.append(client_ip_speed)
+                        continue
+
                     clients_not_done.append(client_ip_speed)
+
                     # ####################################### END change speed END #######################################
 
                     log_string.append(f"{ip_client}---------------------- \n")
