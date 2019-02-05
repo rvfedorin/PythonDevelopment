@@ -1,4 +1,4 @@
-# ver 1.0.0
+# ver 1.0.1
 # created by Roman Fedorin
 
 from sys import exit
@@ -17,6 +17,7 @@ filename = "./nodepath"
 def send_command_to_sw(sw_param, clients: list, messages_queue, login='admin', passw=None):
     sw_port_edit = sw_param.split("-")
     n_port = len(sw_port_edit)
+    _SAVE = 'save\n'
 
     message = '\n'
     message += "_" * 98 + '\n'
@@ -33,7 +34,7 @@ def send_command_to_sw(sw_param, clients: list, messages_queue, login='admin', p
 
         crea_vl = f"create vlan {client.vlan_name} tag {client.vlan_number}\r"
 
-        response = sw_obj.send_command([crea_vl, conf_vl])
+        response = sw_obj.send_command([crea_vl, conf_vl, _SAVE])
         if response[0]:
             message += '\n'.join(response)
         else:
@@ -43,12 +44,11 @@ def send_command_to_sw(sw_param, clients: list, messages_queue, login='admin', p
             if client.tag == "U" or client.tag == "u":
                 del_from_def = f"conf vlan default del {client.sw_port} \r"
                 add_untagged = f"conf vlan {client.vlan_name} add untagged {client.sw_port}\r"
-                response = sw_obj.send_command([del_from_def, add_untagged])
+                response = sw_obj.send_command([del_from_def, add_untagged, _SAVE])
 
             elif client.tag == "T" or client.tag == "t":
                 add_tagged = f"conf vlan {client.vlan_name} add tagged {client.sw_port}\r"
-                _save = 'save\n'
-                response = sw_obj.send_command([add_tagged, _save])
+                response = sw_obj.send_command([add_tagged, _SAVE])
 
             if response[0]:
                 message += '\n'.join(response)
