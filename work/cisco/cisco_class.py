@@ -1,4 +1,4 @@
-# ver 1.0.5
+# ver 1.0.6
 # created by Roman Fedorin
 
 import telnetlib
@@ -99,7 +99,10 @@ class CiscoCreate:
             clients_conf = fc.read().splitlines()
             clients_conf = list(filter(None, clients_conf))
 
-        tn = telnetlib.Telnet(cisco_city)
+        tn = self.login_on_cisco(cisco_city)
+        if not tn:
+            return [False, "Not connect to cisco"]
+
         print("Telnet to " + cisco_city)
         tn.write(b"\n")
         print((tn.read_until(b"Password:", timeout=2)).decode())
@@ -209,7 +212,7 @@ class CiscoCreate:
             print((tn.read_until(b">", timeout=4)).decode())
             tn.write(b"en \n")
             tn.write(self.my_key_e + b"\n")
-        except timeout:
+        except Exception:
             return False
         return tn
 
