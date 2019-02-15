@@ -104,12 +104,12 @@ class CiscoCreate:
             return [False, "Not connect to cisco"]
 
         print("Telnet to " + cisco_city)
-        tn.write(b"\n")
-        print((tn.read_until(b"Password:", timeout=2)).decode())
-        tn.write(self.my_key + b"\n")
-        print((tn.read_until(b">", timeout=2)).decode())
-        tn.write(b"en \n")
-        tn.write(self.my_key_e + b"\n")
+        # tn.write(b"\n")
+        # print((tn.read_until(b"Password:", timeout=2)).decode())
+        # tn.write(self.my_key + b"\n")
+        # print((tn.read_until(b">", timeout=2)).decode())
+        # tn.write(b"en \n")
+        # tn.write(self.my_key_e + b"\n")
 
         for client in client_list:  # List of clients to delete
 
